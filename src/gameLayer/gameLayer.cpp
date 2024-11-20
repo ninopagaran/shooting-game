@@ -11,15 +11,30 @@
 #include <gl2d/gl2d.h>
 #include <platformTools.h>
 
+class GameData 
+{
+public:
+	glm::vec2 player1Pos = { 400,450 };
+	glm::vec2 player2Pos = { 1350,450 };
+};
 
+GameData data;
 
 gl2d::Renderer2D renderer;
+
+gl2d::Texture human1BodyTexture;
+gl2d::Texture human2BodyTexture;
 
 bool initGame()
 {
 	//initializing stuff for the renderer
 	gl2d::init();
 	renderer.create();
+
+	human1BodyTexture.loadFromFile(RESOURCES_PATH "spaceShip/ships/green.png", true); //replace this sprite if naa na;
+	human2BodyTexture.loadFromFile(RESOURCES_PATH "spaceShip/ships/green.png", true); 
+
+
 
 	
 	
@@ -41,10 +56,52 @@ bool gameLogic(float deltaTime)
 	renderer.updateWindowMetrics(w, h);
 #pragma endregion
 
+#pragma region movement on player 1
+
+	glm::vec2 move1 = {};
+
+	if (platform::isButtonHeld(platform::Button::W))
+		move1.y = -1;
+	if (platform::isButtonHeld(platform::Button::S))
+		move1.y = 1;
+	if (platform::isButtonHeld(platform::Button::A))
+		move1.x = -1;
+	if (platform::isButtonHeld(platform::Button::D))
+		move1.x = 1;
+
+	if (move1.x != 0 || move1.y != 0)
+	{
+		move1 = glm::normalize(move1);
+		move1 *= deltaTime * 500;
+		data.player1Pos += move1;
+	}
+#pragma endregion
+
+#pragma region movement on player 2
+
+	glm::vec2 move2 = {};
+
+	if (platform::isButtonHeld(platform::Button::Up))
+		move2.y = -1;
+	if (platform::isButtonHeld(platform::Button::Down))
+		move2.y = 1;
+	if (platform::isButtonHeld(platform::Button::Left))
+		move2.x = -1;
+	if (platform::isButtonHeld(platform::Button::Right))
+		move2.x = 1;
+
+	if (move2.x != 0 || move2.y != 0)
+	{
+		move2 = glm::normalize(move2);
+		move2 *= deltaTime * 500;
+		data.player2Pos += move2;
+	}
+#pragma endregion
 
 
-	renderer.renderRectangle({100,100, 100, 100}, Colors_Blue);
 
+	renderer.renderRectangle({ data.player1Pos, 200, 200}, human1BodyTexture);
+	renderer.renderRectangle({ data.player2Pos, 200, 200 }, human2BodyTexture);
 
 	renderer.flush();
 
