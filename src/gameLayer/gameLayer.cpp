@@ -99,12 +99,22 @@ bool gameLogic(float deltaTime)
 	}
 #pragma endregion
 
+#pragma region camera follow
+
+	glm::vec2 midpoint = {
+		(data.player1Pos.x + data.player2Pos.x) / 2,
+		(data.player1Pos.y + data.player2Pos.y) / 2
+	};
+
+	renderer.currentCamera.follow(midpoint, deltaTime * 450, 10, 50, w, h);
+
+#pragma endregion 
+
 #pragma region render background
 
 	renderer.renderRectangle({ 0, 0, 8000, 8000 }, backgroundTexture);
 
 #pragma endregion
-
 
 
 	renderer.renderRectangle({ data.player1Pos, 100, 100}, human1BodyTexture);
