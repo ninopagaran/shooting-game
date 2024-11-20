@@ -24,6 +24,7 @@ gl2d::Renderer2D renderer;
 
 gl2d::Texture human1BodyTexture;
 gl2d::Texture human2BodyTexture;
+gl2d::Texture backgroundTexture;
 
 bool initGame()
 {
@@ -33,7 +34,7 @@ bool initGame()
 
 	human1BodyTexture.loadFromFile(RESOURCES_PATH "spaceShip/ships/green.png", true); //replace this sprite if naa na;
 	human2BodyTexture.loadFromFile(RESOURCES_PATH "spaceShip/ships/green.png", true); 
-
+	backgroundTexture.loadFromFile(RESOURCES_PATH "tempBackground.png", true);
 
 
 	
@@ -98,10 +99,16 @@ bool gameLogic(float deltaTime)
 	}
 #pragma endregion
 
+#pragma region render background
+
+	renderer.renderRectangle({ 0, 0, 8000, 8000 }, backgroundTexture);
+
+#pragma endregion
 
 
-	renderer.renderRectangle({ data.player1Pos, 200, 200}, human1BodyTexture);
-	renderer.renderRectangle({ data.player2Pos, 200, 200 }, human2BodyTexture);
+
+	renderer.renderRectangle({ data.player1Pos, 100, 100}, human1BodyTexture);
+	renderer.renderRectangle({ data.player2Pos, 100, 100 }, human2BodyTexture);
 
 	renderer.flush();
 
