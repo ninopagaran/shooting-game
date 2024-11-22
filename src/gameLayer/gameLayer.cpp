@@ -81,6 +81,7 @@ bool gameLogic(float deltaTime)
 		data.player1Pos += move1;
 		move1 *= deltaTime * 2000;
 		data.player1Angle += move1;
+		data.player1Angle = glm::normalize(data.player1Angle);
 	}
 
 	float jet1Angle = atan2(-data.player1Angle.x, -data.player1Angle.y);
@@ -108,6 +109,7 @@ bool gameLogic(float deltaTime)
 		data.player2Pos += move2;
 		move2 *= deltaTime * 2000;
 		data.player2Angle += move2;
+		data.player2Angle = glm::normalize(data.player2Angle);
 	}
 	
 	float jet2Angle = atan2(-data.player2Angle.x, -data.player2Angle.y);
