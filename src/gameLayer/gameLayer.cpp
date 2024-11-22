@@ -11,6 +11,8 @@
 #include <gl2d/gl2d.h>
 #include <platformTools.h>
 #include <tiledRenderer.h>
+#include <bullets.h>
+#include <vector>
 
 class GameData 
 {
@@ -19,6 +21,9 @@ public:
 	glm::vec2 player1Angle = { 1, 0 };
 	glm::vec2 player2Pos = { 1350,450 };
 	glm::vec2 player2Angle = { -1, 0 };
+
+	std::vector<Bullets> bullets1;
+	std::vector<Bullets> bullets2;
 };
 
 GameData data;
@@ -30,6 +35,9 @@ gl2d::Texture human1BodyTexture;
 gl2d::Texture human2BodyTexture;
 gl2d::Texture backgroundTexture;
 
+gl2d::Texture bulletsTexture;
+gl2d::TextureAtlasPadding bulletsAtlas;
+
 bool initGame()
 {
 	//initializing stuff for the renderer
@@ -39,6 +47,10 @@ bool initGame()
 	human1BodyTexture.loadFromFile(RESOURCES_PATH "spaceShip/ships/green.png", true); //replace this sprite if naa na;
 	human2BodyTexture.loadFromFile(RESOURCES_PATH "spaceShip/ships/green.png", true); 
 	backgroundTexture.loadFromFile(RESOURCES_PATH "tempBackground.png", true);
+
+	bulletsTexture.loadFromFileWithPixelPadding
+	(RESOURCES_PATH "spaceShip/stitchedFiles/projectiles.png", 500, true);
+	bulletsAtlas = gl2d::TextureAtlasPadding(3, 2, bulletsTexture.GetSize().x, bulletsTexture.GetSize().y);
 	
 	tiledRenderer = TiledRenderer(5000, backgroundTexture);
 
@@ -79,7 +91,6 @@ bool gameLogic(float deltaTime)
 		move1 = glm::normalize(move1);
 		move1 *= deltaTime * 500;
 		data.player1Pos += move1;
-		move1 *= deltaTime * 2000;
 		data.player1Angle += move1;
 		data.player1Angle = glm::normalize(data.player1Angle);
 	}
@@ -107,7 +118,6 @@ bool gameLogic(float deltaTime)
 		move2 = glm::normalize(move2);
 		move2 *= deltaTime * 500;
 		data.player2Pos += move2;
-		move2 *= deltaTime * 2000;
 		data.player2Angle += move2;
 		data.player2Angle = glm::normalize(data.player2Angle);
 	}
@@ -127,11 +137,66 @@ bool gameLogic(float deltaTime)
 
 #pragma endregion 
 
+#pragma region handle bullets 1
+
+	if (platform::isButtonPressedOn(platform::Button::G)) {
+		Bullets b(data.player1Pos, data.player1Angle);
+		data.bullets1.push_back(b);
+	}
+
+	for (int i = 0; i < data.bullets1.size(); i++)
+	{
+
+		if (glm::distance(data.bullets1[i].getPos(), data.player1Pos) > 5'000)
+		{
+			data.bullets1.erase(data.bullets1.begin() + i);
+			i--;
+			continue;
+		}
+		data.bullets1[i].update(deltaTime);
+	}
+
+#pragma endregion 
+
+#pragma region handle bullets 2
+
+	if (platform::isButtonPressedOn(platform::Button::L)) {
+		Bullets b(data.player2Pos, data.player2Angle);
+		data.bullets2.push_back(b);
+	}
+
+	for (int i = 0; i < data.bullets2.size(); i++)
+	{
+
+		if (glm::distance(data.bullets2[i].getPos(), data.player2Pos) > 5'000)
+		{
+			data.bullets2.erase(data.bullets2.begin() + i);
+			i--;
+			continue;
+		}
+		data.bullets2[i].update(deltaTime);
+	}
+
+#pragma endregion 
+
 #pragma region render background
 
 	tiledRenderer.render(renderer);
 
 #pragma endregion
+
+#pragma region render bullets
+	for (auto& b : data.bullets1)
+	{
+		b.render(renderer, bulletsTexture, bulletsAtlas);
+	}
+	for (auto& b : data.bullets2)
+	{
+		b.render(renderer, bulletsTexture, bulletsAtlas);
+	}
+
+#pragma endregion
+
 
 
 	renderer.renderRectangle({ data.player1Pos, 100, 100 }, human1BodyTexture, Colors_White, {}, glm::degrees(jet1Angle));
@@ -141,6 +206,11 @@ bool gameLogic(float deltaTime)
 
 
 	//ImGui::ShowDemoWindow();
+
+	ImGui::Begin("debug");
+	ImGui::Text("Bullets 1 count: %d", (int)data.bullets1.size());
+	ImGui::Text("Bullets 2 count: %d", (int)data.bullets2.size());
+	ImGui::End();
 
 
 	return true;
