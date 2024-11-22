@@ -10,15 +10,19 @@
 #include "imfilebrowser.h"
 #include <gl2d/gl2d.h>
 #include <platformTools.h>
+#include <tiledRenderer.h>
 
 class GameData 
 {
 public:
 	glm::vec2 player1Pos = { 400,450 };
+	glm::vec2 player1Angle = { 1, 0 };
 	glm::vec2 player2Pos = { 1350,450 };
+	glm::vec2 player2Angle = { -1, 0 };
 };
 
 GameData data;
+TiledRenderer tiledRenderer;
 
 gl2d::Renderer2D renderer;
 
@@ -35,9 +39,9 @@ bool initGame()
 	human1BodyTexture.loadFromFile(RESOURCES_PATH "spaceShip/ships/green.png", true); //replace this sprite if naa na;
 	human2BodyTexture.loadFromFile(RESOURCES_PATH "spaceShip/ships/green.png", true); 
 	backgroundTexture.loadFromFile(RESOURCES_PATH "tempBackground.png", true);
-
-
 	
+	tiledRenderer = TiledRenderer(5000, backgroundTexture);
+
 	
 	return true;
 }
@@ -75,7 +79,13 @@ bool gameLogic(float deltaTime)
 		move1 = glm::normalize(move1);
 		move1 *= deltaTime * 500;
 		data.player1Pos += move1;
+		move1 *= deltaTime * 2000;
+		data.player1Angle += move1;
 	}
+
+	float jet1Angle = atan2(-data.player1Angle.x, -data.player1Angle.y);
+
+
 #pragma endregion
 
 #pragma region movement on player 2
@@ -96,7 +106,12 @@ bool gameLogic(float deltaTime)
 		move2 = glm::normalize(move2);
 		move2 *= deltaTime * 500;
 		data.player2Pos += move2;
+		move2 *= deltaTime * 2000;
+		data.player2Angle += move2;
 	}
+	
+	float jet2Angle = atan2(-data.player2Angle.x, -data.player2Angle.y);
+
 #pragma endregion
 
 #pragma region camera follow
@@ -112,13 +127,13 @@ bool gameLogic(float deltaTime)
 
 #pragma region render background
 
-	renderer.renderRectangle({ 0, 0, 8000, 8000 }, backgroundTexture);
+	tiledRenderer.render(renderer);
 
 #pragma endregion
 
 
-	renderer.renderRectangle({ data.player1Pos, 100, 100}, human1BodyTexture);
-	renderer.renderRectangle({ data.player2Pos, 100, 100 }, human2BodyTexture);
+	renderer.renderRectangle({ data.player1Pos, 100, 100 }, human1BodyTexture, Colors_White, {}, glm::degrees(jet1Angle));
+	renderer.renderRectangle({ data.player2Pos, 100, 100 }, human2BodyTexture, Colors_White, {}, glm::degrees(jet2Angle));
 
 	renderer.flush();
 
