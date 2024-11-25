@@ -44,8 +44,8 @@ bool initGame()
 	gl2d::init();
 	renderer.create();
 
-	human1BodyTexture.loadFromFile(RESOURCES_PATH "spaceShip/ships/green.png", true); //replace this sprite if naa na;
-	human2BodyTexture.loadFromFile(RESOURCES_PATH "spaceShip/ships/green.png", true); 
+	human1BodyTexture.loadFromFile(RESOURCES_PATH "jet.png", true); //replace this sprite if naa na;
+	human2BodyTexture.loadFromFile(RESOURCES_PATH "jet.png", true); 
 	backgroundTexture.loadFromFile(RESOURCES_PATH "tempBackground.png", true);
 
 	bulletsTexture.loadFromFileWithPixelPadding
@@ -89,10 +89,9 @@ bool gameLogic(float deltaTime)
 	if (move1.x != 0 || move1.y != 0)
 	{
 		move1 = glm::normalize(move1);
+		data.player1Angle = move1;
 		move1 *= deltaTime * 500;
 		data.player1Pos += move1;
-		data.player1Angle += move1;
-		data.player1Angle = glm::normalize(data.player1Angle);
 	}
 
 	float jet1Angle = atan2(-data.player1Angle.x, -data.player1Angle.y);
@@ -116,10 +115,9 @@ bool gameLogic(float deltaTime)
 	if (move2.x != 0 || move2.y != 0)
 	{
 		move2 = glm::normalize(move2);
+		data.player2Angle = move2;
 		move2 *= deltaTime * 500;
 		data.player2Pos += move2;
-		data.player2Angle += move2;
-		data.player2Angle = glm::normalize(data.player2Angle);
 	}
 	
 	float jet2Angle = atan2(-data.player2Angle.x, -data.player2Angle.y);
@@ -199,8 +197,8 @@ bool gameLogic(float deltaTime)
 
 
 
-	renderer.renderRectangle({ data.player1Pos, 100, 100 }, human1BodyTexture, Colors_White, {}, glm::degrees(jet1Angle));
-	renderer.renderRectangle({ data.player2Pos, 100, 100 }, human2BodyTexture, Colors_White, {}, glm::degrees(jet2Angle));
+	renderer.renderRectangle({ data.player1Pos, 170, 170 }, human1BodyTexture, Colors_White, {}, glm::degrees(jet1Angle));
+	renderer.renderRectangle({ data.player2Pos, 170, 170 }, human2BodyTexture, Colors_White, {}, glm::degrees(jet2Angle));
 
 	renderer.flush();
 
