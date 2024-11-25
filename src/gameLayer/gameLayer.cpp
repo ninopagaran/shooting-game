@@ -27,13 +27,15 @@ public:
 };
 
 GameData data;
-TiledRenderer tiledRenderer;
+
 
 gl2d::Renderer2D renderer;
 
 gl2d::Texture human1BodyTexture;
 gl2d::Texture human2BodyTexture;
-gl2d::Texture backgroundTexture;
+
+TiledRenderer tiledRenderer[2];
+gl2d::Texture backgroundTexture[2];
 
 gl2d::Texture bulletsTexture;
 gl2d::TextureAtlasPadding bulletsAtlas;
@@ -44,15 +46,17 @@ bool initGame()
 	gl2d::init();
 	renderer.create();
 
-	human1BodyTexture.loadFromFile(RESOURCES_PATH "jet.png", true); //replace this sprite if naa na;
-	human2BodyTexture.loadFromFile(RESOURCES_PATH "jet.png", true); 
-	backgroundTexture.loadFromFile(RESOURCES_PATH "tempBackground.png", true);
+	human1BodyTexture.loadFromFile(RESOURCES_PATH "jets/jet2.png", true); //replace this sprite if naa na;
+	human2BodyTexture.loadFromFile(RESOURCES_PATH "jets/jet1.png", true); 
+	backgroundTexture[0].loadFromFile(RESOURCES_PATH "tempBackground1.png", true);
+	backgroundTexture[1].loadFromFile(RESOURCES_PATH "tempBackground2.png", true);
 
 	bulletsTexture.loadFromFileWithPixelPadding
 	(RESOURCES_PATH "spaceShip/stitchedFiles/projectiles.png", 500, true);
 	bulletsAtlas = gl2d::TextureAtlasPadding(3, 2, bulletsTexture.GetSize().x, bulletsTexture.GetSize().y);
 	
-	tiledRenderer = TiledRenderer(5000, backgroundTexture);
+	tiledRenderer[0] = TiledRenderer(5000, backgroundTexture[0]);
+	tiledRenderer[1] = TiledRenderer(5000, backgroundTexture[1]);
 
 	
 	return true;
@@ -179,7 +183,8 @@ bool gameLogic(float deltaTime)
 
 #pragma region render background
 
-	tiledRenderer.render(renderer);
+	for(int i = 0; i < 2; i++)
+		tiledRenderer[i].render(renderer);
 
 #pragma endregion
 
