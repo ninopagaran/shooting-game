@@ -48,8 +48,8 @@ bool initGame()
 
 	human1BodyTexture.loadFromFile(RESOURCES_PATH "jets/jet2.png", true); //replace this sprite if naa na;
 	human2BodyTexture.loadFromFile(RESOURCES_PATH "jets/jet1.png", true); 
-	backgroundTexture[0].loadFromFile(RESOURCES_PATH "tempBackground1.png", true);
-	backgroundTexture[1].loadFromFile(RESOURCES_PATH "tempBackground2.png", true);
+	backgroundTexture[0].loadFromFile(RESOURCES_PATH "background/sky_bg2.jpg", true);
+	backgroundTexture[1].loadFromFile(RESOURCES_PATH "background/clouds_bg2.png", true);
 
 	bulletsTexture.loadFromFileWithPixelPadding
 	(RESOURCES_PATH "spaceShip/stitchedFiles/projectiles.png", 500, true);
