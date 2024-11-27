@@ -5,7 +5,7 @@ TiledRenderer::TiledRenderer() {
 }
 
 TiledRenderer::TiledRenderer(float size, gl2d::Texture tex) {
-	this->backgroundSize = 5000;
+	this->backgroundSize = size;
 	this->texture = tex;
 }
 

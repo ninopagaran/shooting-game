@@ -40,24 +40,32 @@ gl2d::Texture backgroundTexture[2];
 gl2d::Texture bulletsTexture;
 gl2d::TextureAtlasPadding bulletsAtlas;
 
+void restartGame()
+{
+	data = {};
+	renderer.currentCamera.follow(data.player1Pos
+		, 550, 0, 0, renderer.windowW, renderer.windowH);
+}
+
 bool initGame()
 {
 	//initializing stuff for the renderer
 	gl2d::init();
 	renderer.create();
-
+	//what
 	human1BodyTexture.loadFromFile(RESOURCES_PATH "jets/jet2.png", true); //replace this sprite if naa na;
 	human2BodyTexture.loadFromFile(RESOURCES_PATH "jets/jet1.png", true); 
 	backgroundTexture[0].loadFromFile(RESOURCES_PATH "background/sky_bg2.jpg", true);
-	backgroundTexture[1].loadFromFile(RESOURCES_PATH "background/clouds_bg2.png", true);
+	backgroundTexture[1].loadFromFile(RESOURCES_PATH "background/sky_bg2.png", true);
 
 	bulletsTexture.loadFromFileWithPixelPadding
 	(RESOURCES_PATH "spaceShip/stitchedFiles/projectiles.png", 500, true);
 	bulletsAtlas = gl2d::TextureAtlasPadding(3, 2, bulletsTexture.GetSize().x, bulletsTexture.GetSize().y);
 	
-	tiledRenderer[0] = TiledRenderer(5000, backgroundTexture[0]);
-	tiledRenderer[1] = TiledRenderer(5000, backgroundTexture[1]);
+	tiledRenderer[0] = TiledRenderer(1800, backgroundTexture[0]);
+	tiledRenderer[1] = TiledRenderer(1800, backgroundTexture[1]);
 
+	restartGame();
 	
 	return true;
 }
@@ -213,8 +221,12 @@ bool gameLogic(float deltaTime)
 	ImGui::Begin("debug");
 	ImGui::Text("Bullets 1 count: %d", (int)data.bullets1.size());
 	ImGui::Text("Bullets 2 count: %d", (int)data.bullets2.size());
-	ImGui::End();
 
+	if (ImGui::Button("Reset game"))
+	{
+		restartGame();
+	}
+	ImGui::End();
 
 	return true;
 #pragma endregion
