@@ -13,17 +13,20 @@
 #include <tiledRenderer.h>
 #include <bullets.h>
 #include <vector>
+#include <glui/glui.h>
 
 class GameData 
 {
 public:
 	glm::vec2 player1Pos = { 400,450 };
-	glm::vec2 player1Angle = { 1, 0 };
 	glm::vec2 player2Pos = { 1350,450 };
-	glm::vec2 player2Angle = { -1, 0 };
-
 	std::vector<Bullets> bullets1;
+	float health1 = 1.f;
+
+	glm::vec2 player1Angle = { 1, 0 };
+	glm::vec2 player2Angle = { -1, 0 };
 	std::vector<Bullets> bullets2;
+	float health2 = 1.f;
 };
 
 GameData data;
@@ -39,6 +42,9 @@ gl2d::Texture backgroundTexture[2];
 
 gl2d::Texture bulletsTexture;
 gl2d::TextureAtlasPadding bulletsAtlas;
+
+gl2d::Texture healthBar;
+gl2d::Texture health;
 
 void restartGame()
 {
@@ -56,14 +62,19 @@ bool initGame()
 	human1BodyTexture.loadFromFile(RESOURCES_PATH "jets/jet2.png", true); //replace this sprite if naa na;
 	human2BodyTexture.loadFromFile(RESOURCES_PATH "jets/jet1.png", true); 
 	backgroundTexture[0].loadFromFile(RESOURCES_PATH "background/sky_bg2.jpg", true);
-	backgroundTexture[1].loadFromFile(RESOURCES_PATH "background/sky_bg2.png", true);
+	backgroundTexture[1].loadFromFile(RESOURCES_PATH "background/clouds_bg2.png", true);
 
 	bulletsTexture.loadFromFileWithPixelPadding
 	(RESOURCES_PATH "spaceShip/stitchedFiles/projectiles.png", 500, true);
 	bulletsAtlas = gl2d::TextureAtlasPadding(3, 2, bulletsTexture.GetSize().x, bulletsTexture.GetSize().y);
 	
-	tiledRenderer[0] = TiledRenderer(1800, backgroundTexture[0]);
-	tiledRenderer[1] = TiledRenderer(1800, backgroundTexture[1]);
+	tiledRenderer[0] = TiledRenderer(5000, backgroundTexture[0]);
+	tiledRenderer[1] = TiledRenderer(5000, backgroundTexture[1]);
+
+	healthBar.loadFromFile(RESOURCES_PATH "healthBar.png", true);
+	health.loadFromFile(RESOURCES_PATH "health.png", true);
+
+
 
 	restartGame();
 	
@@ -213,9 +224,44 @@ bool gameLogic(float deltaTime)
 	renderer.renderRectangle({ data.player1Pos, 170, 170 }, human1BodyTexture, Colors_White, {}, glm::degrees(jet1Angle));
 	renderer.renderRectangle({ data.player2Pos, 170, 170 }, human2BodyTexture, Colors_White, {}, glm::degrees(jet2Angle));
 
+	renderer.pushCamera();
+	{
+
+		glui::Frame f({ 0,0, w, h });
+
+		glui::Box healthBox1 = glui::Box().xLeftPerc(0.05).yTopPerc(0.05).
+			xDimensionPercentage(0.3).yAspectRatio(1.f / 8.f);
+
+		renderer.renderRectangle(healthBox1, healthBar);
+
+		glm::vec4 newRect1 = healthBox1();
+		newRect1.z *= data.health1;
+
+		glm::vec4 textCoords1 = { 0,1,1,0 };
+		textCoords1.z *= data.health1;
+
+		renderer.renderRectangle(newRect1, health, Colors_White, {}, {},
+			textCoords1);
+
+
+		glui::Box healthBox2 = glui::Box().xLeftPerc(0.65).yTopPerc(0.05).
+			xDimensionPercentage(0.3).yAspectRatio(1.f / 8.f);
+
+		renderer.renderRectangle(healthBox2, healthBar);
+
+		glm::vec4 newRect2 = healthBox2();
+		newRect2.z *= data.health2;
+
+		glm::vec4 textCoords2 = { 0,1,1,0 };
+		textCoords2.z *= data.health2;
+
+		renderer.renderRectangle(newRect2, health, Colors_White, {}, {},
+			textCoords2);
+
+	}
+	renderer.popCamera();
+
 	renderer.flush();
-
-
 	//ImGui::ShowDemoWindow();
 
 	ImGui::Begin("debug");
@@ -226,6 +272,9 @@ bool gameLogic(float deltaTime)
 	{
 		restartGame();
 	}
+
+	ImGui::SliderFloat("Player Health", &data.health1, 0, 1);
+
 	ImGui::End();
 
 	return true;
