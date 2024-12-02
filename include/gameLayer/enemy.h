@@ -13,9 +13,17 @@ private:
 	float turnSpeed = 3.f;
 
 
+	float firedTime = 1.f;
+	float fireTimeReset = 0.2;
+	float fireRange = 1.5;
+	float bulletSpeed = 2000;
+
+
 public:
 	Enemy();
-	Enemy(glm::uvec2, glm::vec2, float, float);
+	Enemy(glm::uvec2, glm::vec2, float, float, float, float);
+	glm::vec2 getPos(); 
+	glm::vec2 getView();
 	void render(gl2d::Renderer2D& renderer, gl2d::Texture& sprites, gl2d::TextureAtlasPadding& atlas);
-	void update(float deltaTime, glm::vec2 playerPos);
+	bool update(float deltaTime, glm::vec2 playerPos);
 };

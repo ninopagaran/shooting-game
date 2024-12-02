@@ -212,7 +212,21 @@ bool gameLogic(float deltaTime)
 
 	for (int i = 0; i < data.enemies.size(); i++)
 	{
-		data.enemies[i].update(deltaTime, data.playerPos);
+		if (glm::distance(data.playerPos, data.enemies[i].getPos()) > 4000.f)
+		{
+			//dispawn enemy
+			data.enemies.erase(data.enemies.begin() + i);
+			i--;
+			continue;
+		}
+
+		if (data.enemies[i].update(deltaTime, data.playerPos))
+		{
+			Bullets b(data.enemies[i].getPos(), data.enemies[i].getView());
+			//todo speed
+			data.bullets.push_back(b);
+		}
+
 	}
 
 #pragma endregion
@@ -270,11 +284,13 @@ bool gameLogic(float deltaTime)
 	if (ImGui::Button("Spawn enemy"))
 	{
 		glm::uvec2 shipTypes[] = { {0,0}, {0,1}, {2,0}, {3, 1} };
-		float speed = 700 + rand() % 1000;
-		float turnSpeed = 2.f + (rand() & 1000) / 500.f;
+		float speed = 800 + rand() % 1000;
+		float turnSpeed = 2.2f + (rand() & 1000) / 500.f;
 		glm::uvec2 type = shipTypes[rand() % 4];
+		float fireRange = 1.5 + (rand() % 1000) / 2000.f;
+		float fireTimeReset = 0.1 + (rand() % 1000) / 500;
 
-		Enemy e(type, data.playerPos, speed, turnSpeed);
+		Enemy e(type, data.playerPos, speed, turnSpeed, fireRange, fireTimeReset);
 		data.enemies.push_back(e);
 	}
 

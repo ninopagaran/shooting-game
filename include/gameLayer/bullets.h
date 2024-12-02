@@ -4,7 +4,7 @@
 class Bullets {
 private:
 	glm::vec2 position = {};
-	glm::vec2 fireDirection = {};
+	glm::vec2 fireDirection = {};	
 
 public:
 	Bullets();
