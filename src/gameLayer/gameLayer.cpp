@@ -136,7 +136,7 @@ bool gameLogic(float deltaTime)
 	if (move.x != 0 || move.y != 0)
 	{
 		move = glm::normalize(move);
-		move *= deltaTime * 700; //200 pixels per seccond
+		move *= deltaTime * 1500; //200 pixels per seccond
 		data.playerPos += move;
 	}
 
@@ -144,7 +144,7 @@ bool gameLogic(float deltaTime)
 
 #pragma region camera follow
 
-	renderer.currentCamera.follow(data.playerPos, deltaTime * 1450, 1, 50, w, h);
+	renderer.currentCamera.follow(data.playerPos, deltaTime * 550, 1, 150, w, h);
 
 #pragma endregion 
 
@@ -276,7 +276,7 @@ bool gameLogic(float deltaTime)
 		float turnSpeed = 2.f + (rand() & 1000) / 500.f;
 		glm::uvec2 type = shipTypes[rand() % 4];
 
-		Enemy e(type, type, speed, turnSpeed);
+		Enemy e(type, data.playerPos, speed, turnSpeed);
 		data.enemies.push_back(e);
 	}
 
