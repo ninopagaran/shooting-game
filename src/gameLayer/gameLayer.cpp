@@ -78,8 +78,6 @@ bool initGame()
 	healthBar.loadFromFile(RESOURCES_PATH "healthBar.png", true);
 	health.loadFromFile(RESOURCES_PATH "health.png", true);
 
-
-
 	restartGame();
 	
 	return true;
