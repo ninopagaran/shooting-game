@@ -36,6 +36,8 @@ gl2d::Renderer2D renderer;
 gl2d::Texture jetBodyTexture;
 gl2d::TextureAtlasPadding jetAtlas;
 
+gl2d::Texture jetPlayerTexture;
+
 TiledRenderer tiledRenderer[2];
 gl2d::Texture backgroundTexture[2];
 
@@ -63,6 +65,7 @@ bool initGame()
 	jetBodyTexture.loadFromFileWithPixelPadding
 	(RESOURCES_PATH "spaceShip/stitchedFiles/spaceships.png", 128, true);
 	jetAtlas = gl2d::TextureAtlasPadding(5, 2, jetBodyTexture.GetSize().x, jetBodyTexture.GetSize().y);
+	jetPlayerTexture.loadFromFile(RESOURCES_PATH "jets/jet.png", true);
 
 	//background
 	backgroundTexture[0].loadFromFile(RESOURCES_PATH "background/sky_bg2.jpg", true);
@@ -244,8 +247,9 @@ bool gameLogic(float deltaTime)
 
 	const float jetSize = 180.f;
 
-	renderJet(renderer, data.playerPos, jetSize,
-		jetBodyTexture, jetAtlas.get(3, 0), mouseDirection);
+	renderer.renderRectangle({ data.playerPos - glm::vec2(jetSize / 2,jetSize / 2)
+		, jetSize,jetSize }, jetPlayerTexture,
+		Colors_White, {}, glm::degrees(jetAngle) + 90.f);
 
 #pragma endregion
 
