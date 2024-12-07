@@ -12,6 +12,7 @@ private:
 	float speed = 1500.f;
 	float turnSpeed = 3.f;
 
+	float life = 1.f;
 
 	float firedTime = 1.f;
 	float fireTimeReset = 0.2;
@@ -26,4 +27,6 @@ public:
 	glm::vec2 getView();
 	void render(gl2d::Renderer2D& renderer, gl2d::Texture& sprites, gl2d::TextureAtlasPadding& atlas);
 	bool update(float deltaTime, glm::vec2 playerPos);
+	void damageLife(float);
+	float getLife();
 };

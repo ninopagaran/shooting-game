@@ -47,6 +47,11 @@ gl2d::TextureAtlasPadding bulletsAtlas;
 gl2d::Texture healthBar;
 gl2d::Texture health;
 
+bool intersectBullet(glm::vec2 bulletPos, glm::vec2 shipPos, float shipSize)
+{
+	return glm::distance(bulletPos, shipPos) <= shipSize;
+}
+
 void restartGame()
 {
 	data = {};
@@ -177,11 +182,11 @@ bool gameLogic(float deltaTime)
 #pragma endregion
 
 #pragma region handle bullets 
-
+	const float jetSize = 180.f;
 
 	if (platform::isLMousePressed())
 	{
-		Bullets b(data.playerPos, mouseDirection);
+		Bullets b(data.playerPos, mouseDirection, false);
 
 		data.bullets.push_back(b);
 	}
@@ -197,8 +202,63 @@ bool gameLogic(float deltaTime)
 			continue;
 		}
 
+		if (!data.bullets[i].isEnemy)
+		{
+			bool breakBothLoops = false;
+			for (int e = 0; e < data.enemies.size(); e++)
+			{
+
+				if (intersectBullet(data.bullets[i].getPos(), data.enemies[e].getPos(),
+					jetSize))
+				{
+					data.enemies[e].damageLife(0.1);
+
+					if (data.enemies[e].getLife() <= 0)
+					{
+						//kill enemy
+						data.enemies.erase(data.enemies.begin() + e);
+					}
+
+					data.bullets.erase(data.bullets.begin() + i);
+					i--;
+					breakBothLoops = true;
+					continue;
+				}
+
+			}
+
+			if (breakBothLoops)
+			{
+				continue;
+			}
+		}
+		else
+		{
+			if (intersectBullet(data.bullets[i].getPos(), data.playerPos,
+				jetSize))
+			{
+				data.health -= 0.1;
+
+				data.bullets.erase(data.bullets.begin() + i);
+				i--;
+				continue;
+			}
+
+		}
+
 		data.bullets[i].update(deltaTime);
 
+	}
+
+	if (data.health <= 0)
+	{
+		//kill player
+		restartGame();
+	}
+	else
+	{
+		data.health += deltaTime * 0.01;
+		data.health = glm::clamp(data.health, 0.f, 1.f);
 	}
 
 #pragma endregion 
@@ -211,7 +271,7 @@ bool gameLogic(float deltaTime)
 
 #pragma endregion
 
-#pragma region handle enemies
+#pragma region handle bullets enemies
 
 	for (int i = 0; i < data.enemies.size(); i++)
 	{
@@ -225,7 +285,7 @@ bool gameLogic(float deltaTime)
 
 		if (data.enemies[i].update(deltaTime, data.playerPos))
 		{
-			Bullets b(data.enemies[i].getPos(), data.enemies[i].getView());
+			Bullets b(data.enemies[i].getPos(), data.enemies[i].getView(), true);
 			//todo speed
 			data.bullets.push_back(b);
 		}
@@ -244,8 +304,6 @@ bool gameLogic(float deltaTime)
 #pragma endregion
 
 #pragma region render jet
-
-	const float jetSize = 180.f;
 
 	renderer.renderRectangle({ data.playerPos - glm::vec2(jetSize / 2,jetSize / 2)
 		, jetSize,jetSize }, jetPlayerTexture,

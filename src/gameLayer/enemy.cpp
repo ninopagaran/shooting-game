@@ -79,3 +79,11 @@ bool Enemy::update(float deltaTime, glm::vec2 playerPos)
 
 	return shoot;
 }
+
+void Enemy::damageLife(float damage) {
+	life -= damage;
+}
+
+float Enemy::getLife() {
+	return life;
+}
