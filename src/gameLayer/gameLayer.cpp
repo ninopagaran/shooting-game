@@ -14,6 +14,7 @@
 #include <glui/glui.h>
 #include <cstdio>
 #include <raudio.h>
+#include <cmath>
 
 #include <enemy.h>
 #include <tiledRenderer.h>
@@ -39,6 +40,7 @@ gl2d::Texture jetBodyTexture;
 gl2d::TextureAtlasPadding jetAtlas;
 
 gl2d::Texture jetPlayerTexture;
+gl2d::Texture botTexture[4];
 
 TiledRenderer tiledRenderer[2];
 gl2d::Texture backgroundTexture[2];
@@ -75,6 +77,10 @@ bool initGame()
 	(RESOURCES_PATH "spaceShip/stitchedFiles/spaceships.png", 128, true);
 	jetAtlas = gl2d::TextureAtlasPadding(5, 2, jetBodyTexture.GetSize().x, jetBodyTexture.GetSize().y);
 	jetPlayerTexture.loadFromFile(RESOURCES_PATH "jets/jet.png", true);
+	botTexture[0].loadFromFile(RESOURCES_PATH "jets/1.png", true);
+	botTexture[1].loadFromFile(RESOURCES_PATH "jets/2.png", true);
+	botTexture[2].loadFromFile(RESOURCES_PATH "jets/3.png", true);
+	botTexture[3].loadFromFile(RESOURCES_PATH "jets/4.png", true);
 
 	//background
 	backgroundTexture[0].loadFromFile(RESOURCES_PATH "background/sky_bg2.jpg", true);
@@ -100,14 +106,14 @@ bool initGame()
 
 void spawnEnemy()
 {
-	glm::uvec2 shipTypes[] = { {0,0}, {0,1}, {2,0}, {3, 1} };
+	int type = rand() % 4;
+	std::cout << type << std::endl;
 
 	glm::vec2 offset(2000, 0);
 	offset = glm::vec2(glm::vec4(offset, 0, 1) * glm::rotate(glm::mat4(1.f), glm::radians((float)(rand() % 360)), glm::vec3(0, 0, 1)));
 
 	float speed = 800 + rand() % 1000;
 	float turnSpeed = 2.2f + (rand() & 1000) / 500.f;
-	glm::uvec2 type = shipTypes[rand() % 4];
 	float fireRange = 1.5 + (rand() % 1000) / 2000.f;
 	float fireTimeReset = 0.1 + (rand() % 1000) / 500;
 	glm::vec2 position = data.playerPos + offset;
@@ -342,7 +348,10 @@ bool gameLogic(float deltaTime)
 
 	for (auto& e : data.enemies)
 	{
-		e.render(renderer, jetBodyTexture, jetAtlas);
+		int type = e.getType();
+		if (!(type >= 0 && type <= 3))
+			type = 0;
+		e.render(renderer, botTexture[type]);
 	}
 
 #pragma endregion
@@ -353,8 +362,7 @@ bool gameLogic(float deltaTime)
 		, jetSize,jetSize }, jetPlayerTexture,
 		Colors_White, {}, glm::degrees(jetAngle) + 90.f);
 
-#pragma endregion
-
+#pragma endregions
 	
 
 	renderer.pushCamera();

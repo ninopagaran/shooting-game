@@ -6,7 +6,6 @@ const float botSize = 150.f;
 class Enemy
 {
 private:
-	glm::uvec2 type = {};
 	glm::vec2 position = {};
 	glm::vec2 viewDirection = { 1, 0 };
 	float speed = 1500.f;
@@ -18,15 +17,16 @@ private:
 	float fireTimeReset = 0.2;
 	float fireRange = 1.5;
 	float bulletSpeed = 2000;
-
-
+	int type;
+	
 public:
 	Enemy();
-	Enemy(glm::uvec2, glm::vec2, float, float, float, float);
+	Enemy(int, glm::vec2, float, float, float, float);
 	glm::vec2 getPos(); 
 	glm::vec2 getView();
-	void render(gl2d::Renderer2D& renderer, gl2d::Texture& sprites, gl2d::TextureAtlasPadding& atlas);
+	void render(gl2d::Renderer2D& renderer, gl2d::Texture& sprites);
 	bool update(float deltaTime, glm::vec2 playerPos);
 	void damageLife(float);
 	float getLife();
+	int getType();
 };

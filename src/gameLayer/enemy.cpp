@@ -5,7 +5,7 @@ Enemy::Enemy() {
 	viewDirection = { 1, 0 };
 }
 
-Enemy::Enemy(glm::uvec2 t, glm::vec2 pos, float s, float tSpeed, float fR, float fT) {
+Enemy::Enemy(int t, glm::vec2 pos, float s, float tSpeed, float fR, float fT) {
 	type = t;
 	position = pos;
 	speed = s;
@@ -14,8 +14,8 @@ Enemy::Enemy(glm::uvec2 t, glm::vec2 pos, float s, float tSpeed, float fR, float
 	fireTimeReset = fT;
 }
 
-void Enemy::render(gl2d::Renderer2D& renderer, gl2d::Texture& sprites, gl2d::TextureAtlasPadding& atlas) {
-	renderJet(renderer, position, botSize, sprites, atlas.get(type.x, type.y), viewDirection);
+void Enemy::render(gl2d::Renderer2D& renderer, gl2d::Texture& sprites) {
+	renderJet(renderer, position, botSize, sprites, viewDirection);
 }
 
 glm::vec2 Enemy::getPos() {
@@ -86,4 +86,8 @@ void Enemy::damageLife(float damage) {
 
 float Enemy::getLife() {
 	return life;
+}
+
+int Enemy::getType() {
+	return type;
 }
