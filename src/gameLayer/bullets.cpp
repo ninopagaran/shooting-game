@@ -28,8 +28,14 @@ void Bullets::render(gl2d::Renderer2D& renderer, gl2d::Texture bulletsTexture, g
 		textureCoords = bulletsAtlas.get(0, 0);
 	}
 	
-	renderer.renderRectangle({ position - glm::vec2(30,30), 60,50 },
-		bulletsTexture, Colors_White, {}, jetAngle, textureCoords);
+	for (int i = 0; i < 5; i++)
+	{
+		glm::vec4 color(1 * (i + 4) / 5.f, 1 * (i + 4) / 5.f, 1 * (i + 4) / 5.f, (i + 1) / 5.f);
+
+		renderer.renderRectangle({ position - glm::vec2(50,50) + (float)i * 25.f * fireDirection, 100,100 },
+			bulletsTexture, color, {}, jetAngle, textureCoords);
+	}
+
 }
 
 void Bullets::update(float deltaTime) {

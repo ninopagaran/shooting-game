@@ -13,6 +13,7 @@
 #include <vector>
 #include <glui/glui.h>
 #include <cstdio>
+#include <raudio.h>
 
 #include <enemy.h>
 #include <tiledRenderer.h>
@@ -47,6 +48,8 @@ gl2d::TextureAtlasPadding bulletsAtlas;
 
 gl2d::Texture healthBar;
 gl2d::Texture health;
+
+Sound shootSound;
 
 bool intersectBullet(glm::vec2 bulletPos, glm::vec2 shipPos, float shipSize)
 {
@@ -86,6 +89,9 @@ bool initGame()
 
 	healthBar.loadFromFile(RESOURCES_PATH "healthBar.png", true);
 	health.loadFromFile(RESOURCES_PATH "health.png", true);
+
+	shootSound = LoadSound(RESOURCES_PATH "shootSfx.flac");
+	SetSoundVolume(shootSound, 0.1);
 
 	restartGame();
 	
@@ -206,6 +212,7 @@ bool gameLogic(float deltaTime)
 		Bullets b(data.playerPos, mouseDirection, false);
 
 		data.bullets.push_back(b);
+		PlaySound(shootSound);
 	}
 
 
@@ -274,7 +281,7 @@ bool gameLogic(float deltaTime)
 	}
 	else
 	{
-		data.health += deltaTime * 0.01;
+		data.health += deltaTime * 0.05;
 		data.health = glm::clamp(data.health, 0.f, 1.f);
 	}
 
@@ -324,6 +331,7 @@ bool gameLogic(float deltaTime)
 			Bullets b(data.enemies[i].getPos(), data.enemies[i].getView(), true);
 			//todo speed
 			data.bullets.push_back(b);
+			if (!IsSoundPlaying(shootSound)) PlaySound(shootSound);
 		}
 
 	}
