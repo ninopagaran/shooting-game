@@ -5,7 +5,7 @@ class Bullets {
 private:
 	glm::vec2 position = {};
 	glm::vec2 fireDirection = {};	
-
+	float speed;
 public:
 	Bullets();
 	Bullets(glm::vec2, glm::vec2,bool);
