@@ -111,13 +111,12 @@ bool initGame()
 
 void spawnEnemy()
 {
-
 	int type;
-	if (data.points < 20)
+	if (data.points < 10)
 		type = 0;
-	else if (data.points >= 20 && data.points < 40)
+	else if (data.points >= 10 && data.points < 30)
 		type = rand() % 2;
-	else if (data.points >= 40 && data.points < 60)
+	else if (data.points >= 30 && data.points < 60)
 		type = rand() % 3;
 	else
 		type = rand() % 4;
@@ -378,7 +377,7 @@ bool gameLogic(float deltaTime)
 		, jetSize,jetSize }, jetPlayerTexture,
 		Colors_White, {}, glm::degrees(jetAngle) + 90.f);
 
-#pragma endregions
+#pragma endregion
 	
 	
 
@@ -401,7 +400,7 @@ bool gameLogic(float deltaTime)
 		renderer.renderRectangle(newRect, health, Colors_White, {}, {},
 			textCoords);
 
-		std::string currentPoints = "Points: " + std::to_string(data.points);
+		std::string currentPoints = "Score: " + std::to_string(data.points);
 		const char* points = currentPoints.c_str();
 		
 		renderer.renderText(glm::vec2{ 200, 50 }, points, font, Colors_Black);
