@@ -60,6 +60,9 @@ gl2d::Texture reloadBullet[3];
 
 gl2d::Texture healthBar;
 gl2d::Texture health;
+gl2d::Texture textBar;
+gl2d::Texture damageIcon;
+gl2d::Texture loadIcon;
 
 gl2d::Font font;
 
@@ -112,6 +115,10 @@ bool initGame()
 	healthBar.loadFromFile(RESOURCES_PATH "healthBar.png", true);
 	health.loadFromFile(RESOURCES_PATH "health.png", true);
 
+	textBar.loadFromFile(RESOURCES_PATH "textbar.png", true);
+	damageIcon.loadFromFile(RESOURCES_PATH "bullets/bullet1.png", true);
+	loadIcon.loadFromFile(RESOURCES_PATH "loadIcon.png", true);
+
 	shootSound = LoadSound(RESOURCES_PATH "shootSfx.flac");
 	SetSoundVolume(shootSound, 0.1);
 
@@ -151,7 +158,7 @@ void spawnEnemy()
 
 void spawnLoads() {
 
-	if (data.loads.size() < 15) {
+	if (data.loads.size() < 15 && data.jetLoad.size() <= 30) {
 		int typeBullet = rand() % 3;
 		std::cout << typeBullet << std::endl;
 		glm::vec2 offset(1500, 0);
@@ -465,22 +472,22 @@ bool gameLogic(float deltaTime)
 
 #pragma endregion
 	
-	std::string d = "Damage: ";
+	std::string d;
 	if (!(data.jetLoad.empty()))
-		d += strDamage(data.jetLoad.front().getType());
+		d = strDamage(data.jetLoad.front().getType());
 	else
-		d += "0";
+		d = "0";
 	
-	std::string remLoad = "Loads: " + std::to_string(data.jetLoad.size());
+	std::string remLoad = std::to_string(data.jetLoad.size());
 	std::string currentLevel = level(data.points);
-	std::string currentPoints = "Score: " + std::to_string(data.points);
+	std::string currentPoints = std::to_string(data.points);
 
 	renderer.pushCamera();
 	{
 
 		glui::Frame f({ 0,0, w, h });
 
-		glui::Box healthBox = glui::Box().xLeftPerc(0.65).yTopPerc(0.05).
+		glui::Box healthBox = glui::Box().xLeftPerc(0.65).yTopPerc(0.04).
 			xDimensionPercentage(0.3).yAspectRatio(1.f / 8.f);
 
 		renderer.renderRectangle(healthBox, healthBar);
@@ -500,10 +507,40 @@ bool gameLogic(float deltaTime)
 		const char* load = remLoad.c_str();
 		const char* damage = d.c_str();
 
-		renderer.renderText(glm::vec2{ 1250, 900 }, damage, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
-		renderer.renderText(glm::vec2{ 1650, 900 }, load, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
-		renderer.renderText(glm::vec2{ 150, 80 }, myLevel, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
-		renderer.renderText(glm::vec2{ 500, 80 }, points, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
+
+		glui::Box levelBox = glui::Box().xLeftPerc(0.03).yTopPerc(0.01).
+			xDimensionPercentage(0.15).yAspectRatio(1.f / 1.8f);
+
+		renderer.renderRectangle(levelBox, textBar);
+
+		renderer.renderText(glm::vec2{ 200, 79 }, "Level", font, Colors_White, (0.5F), (4.0F), (3.0F), true, { (0,0),(0,0), (0,0),0 });
+		renderer.renderText(glm::vec2{ 455, 77 }, myLevel, font, Colors_White, (0.6F), (4.0F), (3.0F), true);
+
+
+		glui::Box scoreBox = glui::Box().xLeftPerc(0.35).yTopPerc(0.01).
+			xDimensionPercentage(0.15).yAspectRatio(1.f / 1.8f);
+		
+		renderer.renderRectangle(scoreBox, textBar);
+		renderer.renderText(glm::vec2{ 820, 79 }, "Score", font, Colors_White, (0.5F), (4.0F), (3.0F), true, { (0,0),(0,0), (0,0),0 });
+		renderer.renderText(glm::vec2{ 1045, 77 }, points, font, Colors_White, (0.6F), (4.0F), (3.0F), true);
+
+		glui::Box damageBox = glui::Box().xLeftPerc(0.65).yTopPerc(0.09).
+			xDimensionPercentage(0.04).yAspectRatio(1);
+
+		renderer.renderRectangle(damageBox, damageIcon);
+		renderer.renderText(glm::vec2{ 1383, 120}, "Damage: ", font, Colors_White, (0.5F), (4.0F), (3.0F), true);
+		renderer.renderText(glm::vec2{ 1461, 117 }, damage, font, Colors_White, (0.5F), (4.0F), (3.0F), true);
+
+		glui::Box loadBox = glui::Box().xLeftPerc(0.85).yTopPerc(0.11).
+			xDimensionPercentage(0.023).yAspectRatio(1);
+		renderer.renderRectangle(loadBox, loadIcon);
+		renderer.renderText(glm::vec2{ 1725, 120 }, "Load: ", font, Colors_White, (0.5F), (4.0F), (3.0F), true);
+		renderer.renderText(glm::vec2{ 1785, 116 }, load, font, Colors_White, (0.5F), (4.0F), (3.0F), true);
+
+
+		
+		//renderer.renderText(glm::vec2{ 1650, 900 }, load, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
+		//renderer.renderText(glm::vec2{ 500, 80 }, points, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
 
 	}
 	renderer.popCamera();
