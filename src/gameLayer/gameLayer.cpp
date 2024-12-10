@@ -153,6 +153,7 @@ void spawnLoads() {
 
 	if (data.loads.size() < 15) {
 		int typeBullet = rand() % 3;
+		std::cout << typeBullet << std::endl;
 		glm::vec2 offset(1500, 0);
 		glm::vec2 offsetBullet = glm::vec2(glm::vec4(offset, 0, 1) * glm::rotate(glm::mat4(1.f), glm::radians((float)(rand() % 360)), glm::vec3(0, 0, 1)));
 		glm::vec2 posBullet = data.playerPos + offsetBullet;
@@ -173,6 +174,15 @@ std::string level(int points) {
 	else
 		return "Master";
 		
+}
+
+std::string strDamage(int type) {
+	if (type == 0)
+		return "50";
+	else if (type == 1)
+		return "30";
+	else
+		return "20";
 }
 
 bool gameLogic(float deltaTime)
@@ -301,7 +311,8 @@ bool gameLogic(float deltaTime)
 	if (platform::isLMousePressed() && !(data.jetLoad.empty()) )
 	{
 		if (data.jetLoad.front().canLoadBullet()) {
-			Bullets b(data.playerPos, mouseDirection, false, data.jetLoad.front().getDamage());
+			Bullets b(data.playerPos, mouseDirection, false, data.jetLoad.front().getDamage(), data.jetLoad.front().getType());
+			std::cout << data.jetLoad.front().getDamage() << std::endl;
 			data.bullets.push_back(b);
 			PlaySound(shootSound);
 		}
@@ -338,7 +349,7 @@ bool gameLogic(float deltaTime)
 						data.points += (data.enemies[e].getType() + 1);
 						data.enemies.erase(data.enemies.begin() + e);
 					}
-
+					//std::cout << data.bullets[i].getDamage() << std::endl;
 					data.bullets.erase(data.bullets.begin() + i);
 					i--;
 					breakBothLoops = true;
@@ -424,7 +435,7 @@ bool gameLogic(float deltaTime)
 
 		if (data.enemies[i].update(deltaTime, data.playerPos))
 		{
-			Bullets b(data.enemies[i].getPos(), data.enemies[i].getView(), true, data.enemies[i].getDamage());
+			Bullets b(data.enemies[i].getPos(), data.enemies[i].getView(), true, data.enemies[i].getDamage(), 1);
 			//todo speed
 			data.bullets.push_back(b);
 			if (!IsSoundPlaying(shootSound)) PlaySound(shootSound);
@@ -454,7 +465,15 @@ bool gameLogic(float deltaTime)
 
 #pragma endregion
 	
+	std::string d = "Damage: ";
+	if (!(data.jetLoad.empty()))
+		d += strDamage(data.jetLoad.front().getType());
+	else
+		d += "0";
 	
+	std::string remLoad = "Loads: " + std::to_string(data.jetLoad.size());
+	std::string currentLevel = level(data.points);
+	std::string currentPoints = "Score: " + std::to_string(data.points);
 
 	renderer.pushCamera();
 	{
@@ -476,13 +495,15 @@ bool gameLogic(float deltaTime)
 			textCoords);
 
 
-		std::string currentPoints = "Score: " + std::to_string(data.points);
 		const char* points = currentPoints.c_str();
-		std::string currentLevel = level(data.points);
 		const char* myLevel = currentLevel.c_str();
+		const char* load = remLoad.c_str();
+		const char* damage = d.c_str();
 
-		renderer.renderText(glm::vec2{ 150, 50 }, myLevel, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
-		renderer.renderText(glm::vec2{ 500, 50 }, points, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
+		renderer.renderText(glm::vec2{ 1250, 900 }, damage, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
+		renderer.renderText(glm::vec2{ 1650, 900 }, load, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
+		renderer.renderText(glm::vec2{ 150, 80 }, myLevel, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
+		renderer.renderText(glm::vec2{ 500, 80 }, points, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
 
 	}
 	renderer.popCamera();

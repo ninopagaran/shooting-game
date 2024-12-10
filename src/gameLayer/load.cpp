@@ -1,4 +1,5 @@
 #include <load.h>
+#include <iostream>
 
 LoadBullet::LoadBullet() {
 	type = 0;
@@ -11,6 +12,7 @@ LoadBullet::LoadBullet(glm::vec2 pos, int t, int l) {
 	type = t;
 	load = l;
 
+	//std::cout << t << std::endl;
 	if (t == 0)
 		damage = 0.5;
 	else if (t == 1)

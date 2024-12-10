@@ -5,12 +5,13 @@ Bullets::Bullets() {
 	fireDirection = { 0, 0 };
 }
 
-Bullets::Bullets(glm::vec2 pos, glm::vec2 dir, bool enemy, float d) {
+Bullets::Bullets(glm::vec2 pos, glm::vec2 dir, bool enemy, float d, int t) {
 	position = pos;
 	fireDirection = dir;
 	isEnemy = enemy;
 	speed = 2500;	
 	damage = d;
+	type = t;
 }
 
 glm::vec2 Bullets::getPos() {
@@ -24,11 +25,15 @@ void Bullets::render(gl2d::Renderer2D& renderer, gl2d::Texture bulletsTexture, g
 
 	glm::vec4 textureCoords = bulletsAtlas.get(1, 1);
 
-	if (isEnemy)
+	if (isEnemy || type == 1)
 	{
 		textureCoords = bulletsAtlas.get(0, 0);
 	}
-	
+	else if (type == 2)
+		textureCoords = bulletsAtlas.get(0, 1);
+	else if (type == 0)
+		bulletsAtlas.get(1, 1);
+
 	for (int i = 0; i < 5; i++)
 	{
 		glm::vec4 color(1 * (i + 4) / 5.f, 1 * (i + 4) / 5.f, 1 * (i + 4) / 5.f, (i + 1) / 5.f);
