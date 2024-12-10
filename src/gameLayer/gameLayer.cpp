@@ -10,7 +10,6 @@
 #include "imfilebrowser.h"
 #include <gl2d/gl2d.h>
 #include <platformTools.h>
-#include <vector>
 #include <glui/glui.h>
 #include <cstdio>
 #include <raudio.h>
@@ -20,6 +19,11 @@
 #include <enemy.h>
 #include <tiledRenderer.h>
 #include <bullets.h>
+#include <load.h>
+
+#include <vector>
+#include <queue>
+
 
 class GameData 
 {
@@ -27,6 +31,9 @@ public:
 	glm::vec2 playerPos = { 100, 100};
 	std::vector<Bullets> bullets;
 	std::vector<Enemy> enemies;
+	std::vector<LoadBullet> loads;
+
+	std::queue<LoadBullet> jetLoad;
 
 	float health = 1.f;
 	float spawnTimeEnemy = 3;
@@ -48,6 +55,8 @@ gl2d::Texture backgroundTexture[2];
 
 gl2d::Texture bulletsTexture;
 gl2d::TextureAtlasPadding bulletsAtlas;
+
+gl2d::Texture reloadBullet[3];
 
 gl2d::Texture healthBar;
 gl2d::Texture health;
@@ -93,6 +102,10 @@ bool initGame()
 	(RESOURCES_PATH "spaceShip/stitchedFiles/projectiles.png", 500, true);
 	bulletsAtlas = gl2d::TextureAtlasPadding(3, 2, bulletsTexture.GetSize().x, bulletsTexture.GetSize().y);
 	
+	reloadBullet[0].loadFromFile(RESOURCES_PATH "bullets/reload/1.png", true);
+	reloadBullet[1].loadFromFile(RESOURCES_PATH "bullets/reload/2.png", true);
+	reloadBullet[2].loadFromFile(RESOURCES_PATH "bullets/reload/3.png", true);
+
 	tiledRenderer[0] = TiledRenderer(5000, backgroundTexture[0]);
 	tiledRenderer[1] = TiledRenderer(5000, backgroundTexture[1]);
 
@@ -136,6 +149,32 @@ void spawnEnemy()
 	data.enemies.push_back(e);
 }
 
+void spawnLoads() {
+
+	if (data.loads.size() < 15) {
+		int typeBullet = rand() % 3;
+		glm::vec2 offset(1500, 0);
+		glm::vec2 offsetBullet = glm::vec2(glm::vec4(offset, 0, 1) * glm::rotate(glm::mat4(1.f), glm::radians((float)(rand() % 360)), glm::vec3(0, 0, 1)));
+		glm::vec2 posBullet = data.playerPos + offsetBullet;
+		int load = 10;
+
+		LoadBullet l(posBullet, typeBullet, load);
+
+		data.loads.push_back(l);
+	}
+	
+}
+
+std::string level(int points) {
+	if (points < 10)
+		return "Beginner";
+	else if (points >= 10 && points < 60)
+		return "Average";
+	else
+		return "Master";
+		
+}
+
 bool gameLogic(float deltaTime)
 {
 #pragma region init stuff
@@ -147,6 +186,7 @@ bool gameLogic(float deltaTime)
 	glClear(GL_COLOR_BUFFER_BIT); //clear screen
 
 	renderer.updateWindowMetrics(w, h);
+	const float jetSize = 180.f;
 #pragma endregion
 
 #pragma region movement on player 
@@ -224,15 +264,50 @@ bool gameLogic(float deltaTime)
 
 #pragma endregion
 
+#pragma region render loads bullets
+
+	spawnLoads();
+
+	for (int i = 0; i < data.loads.size(); i++) {
+
+		if (glm::distance(data.playerPos, data.loads[i].getPos()) > 4000.f)
+		{
+			data.loads.erase(data.loads.begin() + i);
+			i--;
+			continue;
+		}
+		int type = data.loads[i].getType();
+
+		renderer.renderRectangle({ data.loads[i].getPos(), 100.f, 100.f}, reloadBullet[type], Colors_White, {}, {});
+
+	}
+
+	for (int i = 0; i < data.loads.size(); i++) {
+		
+		if (intersectBullet(data.loads[i].getPos(), data.playerPos, jetSize)) {
+			LoadBullet l(data.loads[i].getPos(), data.loads[i].getType(), data.loads[i].getLoad());
+
+			data.jetLoad.push(l);
+			data.loads.erase(data.loads.begin() + i);
+			i--;
+			continue;
+		}
+	}
+
+#pragma endregion
+
 #pragma region handle bullets 
-	const float jetSize = 180.f;
 
-	if (platform::isLMousePressed())
+	if (platform::isLMousePressed() && !(data.jetLoad.empty()) )
 	{
-		Bullets b(data.playerPos, mouseDirection, false, 0.1);
-
-		data.bullets.push_back(b);
-		PlaySound(shootSound);
+		if (data.jetLoad.front().canLoadBullet()) {
+			Bullets b(data.playerPos, mouseDirection, false, data.jetLoad.front().getDamage());
+			data.bullets.push_back(b);
+			PlaySound(shootSound);
+		}
+		else
+			data.jetLoad.pop();
+		
 	}
 
 
@@ -255,7 +330,7 @@ bool gameLogic(float deltaTime)
 				if (intersectBullet(data.bullets[i].getPos(), data.enemies[e].getPos(),
 					jetSize))
 				{
-					data.enemies[e].damageLife(0.1);
+					data.enemies[e].damageLife(data.bullets[i].getDamage());
 
 					if (data.enemies[e].getLife() <= 0)
 					{
@@ -318,7 +393,7 @@ bool gameLogic(float deltaTime)
 
 #pragma region handle bullets enemies
 
-	if (data.enemies.size() < 15)
+	if (data.enemies.size() < 10)
 	{
 		data.spawnTimeEnemy -= deltaTime;
 
@@ -400,10 +475,14 @@ bool gameLogic(float deltaTime)
 		renderer.renderRectangle(newRect, health, Colors_White, {}, {},
 			textCoords);
 
+
 		std::string currentPoints = "Score: " + std::to_string(data.points);
 		const char* points = currentPoints.c_str();
-		
-		renderer.renderText(glm::vec2{ 200, 50 }, points, font, Colors_Black);
+		std::string currentLevel = level(data.points);
+		const char* myLevel = currentLevel.c_str();
+
+		renderer.renderText(glm::vec2{ 150, 50 }, myLevel, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
+		renderer.renderText(glm::vec2{ 500, 50 }, points, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
 
 	}
 	renderer.popCamera();
