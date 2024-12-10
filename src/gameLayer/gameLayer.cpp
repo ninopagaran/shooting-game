@@ -111,7 +111,17 @@ bool initGame()
 
 void spawnEnemy()
 {
-	int type = rand() % 4;
+
+	int type;
+	if (data.points < 20)
+		type = 0;
+	else if (data.points >= 20 && data.points < 40)
+		type = rand() % 2;
+	else if (data.points >= 40 && data.points < 60)
+		type = rand() % 3;
+	else
+		type = rand() % 4;
+
 	std::cout << type << std::endl;
 
 	glm::vec2 offset(2000, 0);
