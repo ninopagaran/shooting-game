@@ -61,7 +61,7 @@ gl2d::Texture reloadBullet[3];
 gl2d::Texture healthBar;
 gl2d::Texture health;
 gl2d::Texture textBar;
-gl2d::Texture damageIcon;
+gl2d::Texture damageIcon[3];
 gl2d::Texture loadIcon;
 
 gl2d::Font font;
@@ -116,13 +116,15 @@ bool initGame()
 	health.loadFromFile(RESOURCES_PATH "health.png", true);
 
 	textBar.loadFromFile(RESOURCES_PATH "textbar.png", true);
-	damageIcon.loadFromFile(RESOURCES_PATH "bullets/bullet1.png", true);
+	damageIcon[0].loadFromFile(RESOURCES_PATH "bullets/red.png", true);
+	damageIcon[1].loadFromFile(RESOURCES_PATH "bullets/blue.png", true);
+	damageIcon[2].loadFromFile(RESOURCES_PATH "bullets/green.png", true);
 	loadIcon.loadFromFile(RESOURCES_PATH "loadIcon.png", true);
 
 	shootSound = LoadSound(RESOURCES_PATH "shootSfx.flac");
 	SetSoundVolume(shootSound, 0.1);
 
-	font.createFromFile(RESOURCES_PATH "roboto_black.ttf");
+	font.createFromFile(RESOURCES_PATH "Minecraft.ttf");
 
 	restartGame();
 	
@@ -158,7 +160,7 @@ void spawnEnemy()
 
 void spawnLoads() {
 
-	if (data.loads.size() < 15 && data.jetLoad.size() <= 30) {
+	if (data.loads.size() < 15 && data.jetLoad.size() < 20) {
 		int typeBullet = rand() % 3;
 		std::cout << typeBullet << std::endl;
 		glm::vec2 offset(1500, 0);
@@ -514,28 +516,34 @@ bool gameLogic(float deltaTime)
 		renderer.renderRectangle(levelBox, textBar);
 
 		renderer.renderText(glm::vec2{ 200, 79 }, "Level", font, Colors_White, (0.5F), (4.0F), (3.0F), true, { (0,0),(0,0), (0,0),0 });
-		renderer.renderText(glm::vec2{ 455, 77 }, myLevel, font, Colors_White, (0.6F), (4.0F), (3.0F), true);
+		renderer.renderText(glm::vec2{ 460, 77 }, myLevel, font, Colors_White, (0.6F), (4.0F), (3.0F), true);
 
 
 		glui::Box scoreBox = glui::Box().xLeftPerc(0.35).yTopPerc(0.01).
 			xDimensionPercentage(0.15).yAspectRatio(1.f / 1.8f);
 		
 		renderer.renderRectangle(scoreBox, textBar);
-		renderer.renderText(glm::vec2{ 820, 79 }, "Score", font, Colors_White, (0.5F), (4.0F), (3.0F), true, { (0,0),(0,0), (0,0),0 });
-		renderer.renderText(glm::vec2{ 1045, 77 }, points, font, Colors_White, (0.6F), (4.0F), (3.0F), true);
+		renderer.renderText(glm::vec2{ 820, 79 }, "Score", font, Colors_White, (0.5F), (4.0F), (3.0F), true, { (0,1),(0,1), (0,1),0 });
+		renderer.renderText(glm::vec2{ 1045, 74 }, points, font, Colors_White, (0.6F), (4.0F), (3.0F), true);
 
-		glui::Box damageBox = glui::Box().xLeftPerc(0.65).yTopPerc(0.09).
-			xDimensionPercentage(0.04).yAspectRatio(1);
+		glui::Box damageBox = glui::Box().xLeftPerc(0.652).yTopPerc(0.107).
+			xDimensionPercentage(0.03).yAspectRatio(0.7);
 
-		renderer.renderRectangle(damageBox, damageIcon);
+		if (d == "20")
+			renderer.renderRectangle(damageBox, damageIcon[2]);
+		else if (d == "30")
+			renderer.renderRectangle(damageBox, damageIcon[1]);
+		else
+			renderer.renderRectangle(damageBox, damageIcon[0]);
+
 		renderer.renderText(glm::vec2{ 1383, 120}, "Damage: ", font, Colors_White, (0.5F), (4.0F), (3.0F), true);
-		renderer.renderText(glm::vec2{ 1461, 117 }, damage, font, Colors_White, (0.5F), (4.0F), (3.0F), true);
+		renderer.renderText(glm::vec2{ 1480, 117 }, damage, font, Colors_White, (0.5F), (4.0F), (3.0F), true);
 
 		glui::Box loadBox = glui::Box().xLeftPerc(0.85).yTopPerc(0.11).
 			xDimensionPercentage(0.023).yAspectRatio(1);
 		renderer.renderRectangle(loadBox, loadIcon);
 		renderer.renderText(glm::vec2{ 1725, 120 }, "Load: ", font, Colors_White, (0.5F), (4.0F), (3.0F), true);
-		renderer.renderText(glm::vec2{ 1785, 116 }, load, font, Colors_White, (0.5F), (4.0F), (3.0F), true);
+		renderer.renderText(glm::vec2{ 1790, 115 }, load, font, Colors_White, (0.5F), (4.0F), (3.0F), true);
 
 
 		
