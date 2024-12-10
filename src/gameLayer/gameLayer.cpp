@@ -68,6 +68,19 @@ gl2d::Font font;
 
 Sound shootSound;
 
+//menu
+gl2d::Texture playButton;
+gl2d::TextureAtlasPadding playButtonAtlas;
+
+gl2d::Texture howButton;
+gl2d::TextureAtlasPadding howButtonAtlas;
+
+gl2d::Texture creditsButton;
+gl2d::TextureAtlasPadding creditsButtonAtlas;
+
+gl2d::Texture howToPlayTex;
+gl2d::Texture creditsTex;
+
 bool intersectBullet(glm::vec2 bulletPos, glm::vec2 shipPos, float shipSize)
 {
 	return glm::distance(bulletPos, shipPos) <= shipSize;
@@ -82,15 +95,13 @@ void restartGame()
 
 bool initGame()
 {
+	//game
 	std::srand(std::time(0));
 	//initializing stuff for the renderer
 	gl2d::init();
 	renderer.create();
 	
 	//game player sprite
-	jetBodyTexture.loadFromFileWithPixelPadding
-	(RESOURCES_PATH "spaceShip/stitchedFiles/spaceships.png", 128, true);
-	jetAtlas = gl2d::TextureAtlasPadding(5, 2, jetBodyTexture.GetSize().x, jetBodyTexture.GetSize().y);
 	jetPlayerTexture.loadFromFile(RESOURCES_PATH "jets/jet.png", true);
 	botTexture[0].loadFromFile(RESOURCES_PATH "jets/1.png", true);
 	botTexture[1].loadFromFile(RESOURCES_PATH "jets/2.png", true);
@@ -125,6 +136,17 @@ bool initGame()
 	SetSoundVolume(shootSound, 0.1);
 
 	font.createFromFile(RESOURCES_PATH "Minecraft.ttf");
+
+	//menu
+	playButton.loadFromFileWithPixelPadding(RESOURCES_PATH "buttons/1.png", 500, true);
+	playButtonAtlas = gl2d::TextureAtlasPadding(2, 1, bulletsTexture.GetSize().x, bulletsTexture.GetSize().y);
+	howButton.loadFromFileWithPixelPadding(RESOURCES_PATH "buttons/2.png", 500, true);
+	howButtonAtlas = gl2d::TextureAtlasPadding(2, 1, bulletsTexture.GetSize().x, bulletsTexture.GetSize().y);
+	creditsButton.loadFromFileWithPixelPadding(RESOURCES_PATH "buttons/3.png", 500, true);
+	creditsButtonAtlas = gl2d::TextureAtlasPadding(2, 1, bulletsTexture.GetSize().x, bulletsTexture.GetSize().y);
+
+	howToPlayTex.loadFromFile(RESOURCES_PATH "howToPlay.png", true);
+	
 
 	restartGame();
 	
@@ -193,20 +215,85 @@ std::string strDamage(int type) {
 	else
 		return "20";
 }
+const float jetSize = 180.f;
 
-bool gameLogic(float deltaTime)
+int whatYouDoin = 0;
+const float buttonSize = 250.f;
+int presentButton = 0;
+
+void menu(int w, int h) 
 {
-#pragma region init stuff
-	int w = 0; int h = 0;
-	w = platform::getFrameBufferSizeX(); //window w
-	h = platform::getFrameBufferSizeY(); //window h
-	
-	glViewport(0, 0, w, h);
-	glClear(GL_COLOR_BUFFER_BIT); //clear screen
 
-	renderer.updateWindowMetrics(w, h);
-	const float jetSize = 180.f;
-#pragma endregion
+	for (int i = 0; i < 2; i++)
+		tiledRenderer[i].render(renderer);
+
+	glm::vec2 playButtonPos = { 985,500 };
+
+	int maxButtons = 3; 
+
+	if (platform::isButtonReleased(platform::Button::Up))
+	{
+		if (presentButton == 0)
+			presentButton = maxButtons - 1;
+		else
+			presentButton -= 1; 
+	}
+	else if (platform::isButtonReleased(platform::Button::Down))
+	{
+		if (presentButton == maxButtons - 1)
+			presentButton = 0; 
+		else
+			presentButton += 1; 
+	}
+
+
+	if (presentButton == 0)
+	{
+		renderer.renderRectangle({ playButtonPos - glm::vec2(buttonSize / 2,buttonSize / 2), buttonSize, buttonSize }, playButton, Colors_White, {}, 0, playButtonAtlas.get(0, 0));
+		if (platform::isButtonReleased(platform::Button::Enter))
+			whatYouDoin = 1;
+	}
+	else
+		renderer.renderRectangle({ playButtonPos - glm::vec2(buttonSize / 2,buttonSize / 2), buttonSize, buttonSize }, playButton, Colors_White, {}, 0, playButtonAtlas.get(1, 0));
+
+	if (presentButton == 1)
+	{
+		renderer.renderRectangle({ playButtonPos + glm::vec2 {0, 200} - glm::vec2(buttonSize / 2,buttonSize / 2), buttonSize, buttonSize }, howButton, Colors_White, {}, 0, playButtonAtlas.get(0, 0));
+		if (platform::isButtonReleased(platform::Button::Enter))
+			whatYouDoin = 2;
+	}
+	else
+		renderer.renderRectangle({ playButtonPos + glm::vec2 {0, 200} - glm::vec2(buttonSize / 2,buttonSize / 2), buttonSize, buttonSize }, howButton, Colors_White, {}, 0, playButtonAtlas.get(1, 0));
+
+	if (presentButton == 2 )
+	{
+		renderer.renderRectangle({ playButtonPos + glm::vec2 {0, 400} - glm::vec2(buttonSize / 2,buttonSize / 2), buttonSize, buttonSize }, creditsButton, Colors_White, {}, 0, playButtonAtlas.get(0, 0));
+		if (platform::isButtonReleased(platform::Button::Enter))
+			whatYouDoin = 3;
+	}
+	else
+		renderer.renderRectangle({ playButtonPos + glm::vec2 {0, 400} - glm::vec2(buttonSize / 2,buttonSize / 2), buttonSize, buttonSize }, creditsButton, Colors_White, {}, 0, playButtonAtlas.get(1, 0));
+
+	
+
+}
+
+void howToplay(int w, int h)
+{
+	renderer.renderRectangle({glm::vec2{ 0,0 }, w, h, }, howToPlayTex);
+	if (platform::isButtonReleased(platform::Button::Escape))
+		whatYouDoin = 0;
+}
+
+void credits(int w, int h)
+{
+	if (platform::isButtonReleased(platform::Button::Escape))
+		whatYouDoin = 0;
+}
+
+
+void gameplay(float deltaTime, int w, int h)
+{
 
 #pragma region movement on player 
 
@@ -258,7 +345,7 @@ bool gameLogic(float deltaTime)
 
 #pragma region render background
 
-	for(int i = 0; i < 2; i++)
+	for (int i = 0; i < 2; i++)
 		tiledRenderer[i].render(renderer);
 
 #pragma endregion
@@ -297,12 +384,12 @@ bool gameLogic(float deltaTime)
 		}
 		int type = data.loads[i].getType();
 
-		renderer.renderRectangle({ data.loads[i].getPos(), 100.f, 100.f}, reloadBullet[type], Colors_White, {}, {});
+		renderer.renderRectangle({ data.loads[i].getPos(), 100.f, 100.f }, reloadBullet[type], Colors_White, {}, {});
 
 	}
 
 	for (int i = 0; i < data.loads.size(); i++) {
-		
+
 		if (intersectBullet(data.loads[i].getPos(), data.playerPos, jetSize)) {
 			LoadBullet l(data.loads[i].getPos(), data.loads[i].getType(), data.loads[i].getLoad());
 
@@ -317,7 +404,7 @@ bool gameLogic(float deltaTime)
 
 #pragma region handle bullets 
 
-	if (platform::isLMousePressed() && !(data.jetLoad.empty()) )
+	if (platform::isLMousePressed() && !(data.jetLoad.empty()))
 	{
 		if (data.jetLoad.front().canLoadBullet()) {
 			Bullets b(data.playerPos, mouseDirection, false, data.jetLoad.front().getDamage(), data.jetLoad.front().getType());
@@ -327,7 +414,7 @@ bool gameLogic(float deltaTime)
 		}
 		else
 			data.jetLoad.pop();
-		
+
 	}
 
 
@@ -393,7 +480,7 @@ bool gameLogic(float deltaTime)
 	if (data.health <= 0)
 	{
 		//kill player
-		restartGame();
+		whatYouDoin = 0;
 	}
 	else
 	{
@@ -417,7 +504,7 @@ bool gameLogic(float deltaTime)
 	{
 		data.spawnTimeEnemy -= deltaTime;
 
-		if (data.spawnTimeEnemy  < 0)
+		if (data.spawnTimeEnemy < 0)
 		{
 			data.spawnTimeEnemy = rand() % 6 + 1;
 
@@ -473,13 +560,13 @@ bool gameLogic(float deltaTime)
 		Colors_White, {}, glm::degrees(jetAngle) + 90.f);
 
 #pragma endregion
-	
+
 	std::string d;
 	if (!(data.jetLoad.empty()))
 		d = strDamage(data.jetLoad.front().getType());
 	else
 		d = "0";
-	
+
 	std::string remLoad = std::to_string(data.jetLoad.size());
 	std::string currentLevel = level(data.points);
 	std::string currentPoints = std::to_string(data.points);
@@ -521,7 +608,7 @@ bool gameLogic(float deltaTime)
 
 		glui::Box scoreBox = glui::Box().xLeftPerc(0.35).yTopPerc(0.01).
 			xDimensionPercentage(0.15).yAspectRatio(1.f / 1.8f);
-		
+
 		renderer.renderRectangle(scoreBox, textBar);
 		renderer.renderText(glm::vec2{ 820, 79 }, "Score", font, Colors_White, (0.5F), (4.0F), (3.0F), true, { (0,1),(0,1), (0,1),0 });
 		renderer.renderText(glm::vec2{ 1045, 74 }, points, font, Colors_White, (0.6F), (4.0F), (3.0F), true);
@@ -536,7 +623,7 @@ bool gameLogic(float deltaTime)
 		else
 			renderer.renderRectangle(damageBox, damageIcon[0]);
 
-		renderer.renderText(glm::vec2{ 1383, 120}, "Damage: ", font, Colors_White, (0.5F), (4.0F), (3.0F), true);
+		renderer.renderText(glm::vec2{ 1383, 120 }, "Damage: ", font, Colors_White, (0.5F), (4.0F), (3.0F), true);
 		renderer.renderText(glm::vec2{ 1480, 117 }, damage, font, Colors_White, (0.5F), (4.0F), (3.0F), true);
 
 		glui::Box loadBox = glui::Box().xLeftPerc(0.85).yTopPerc(0.11).
@@ -545,18 +632,54 @@ bool gameLogic(float deltaTime)
 		renderer.renderText(glm::vec2{ 1725, 120 }, "Load: ", font, Colors_White, (0.5F), (4.0F), (3.0F), true);
 		renderer.renderText(glm::vec2{ 1790, 115 }, load, font, Colors_White, (0.5F), (4.0F), (3.0F), true);
 
-
-		
-		//renderer.renderText(glm::vec2{ 1650, 900 }, load, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
-		//renderer.renderText(glm::vec2{ 500, 80 }, points, font, Colors_Black, (1.0F), (4.0F), (3.0F), true, {});
-
 	}
 	renderer.popCamera();
 
+	if (platform::isButtonReleased(platform::Button::Escape))
+		whatYouDoin = 0;
+}
+
+bool gameLogic(float deltaTime)
+{
+#pragma region init stuff
+	int w = 0; int h = 0;
+	w = platform::getFrameBufferSizeX(); //window w
+	h = platform::getFrameBufferSizeY(); //window h
+	
+	glViewport(0, 0, w, h);
+	glClear(GL_COLOR_BUFFER_BIT); //clear screen
+
+	renderer.updateWindowMetrics(w, h);
+#pragma endregion
+	
+	if (whatYouDoin == 0)
+	{
+		renderer.pushCamera();
+			menu(w, h);
+			restartGame();
+		renderer.popCamera();
+	}
+
+	else if (whatYouDoin == 1)
+	{
+		gameplay(deltaTime, w, h);
+	}
+	else if (whatYouDoin == 2)
+	{
+		renderer.pushCamera();
+			howToplay(w, h);
+		renderer.popCamera();
+	}
+	else if (whatYouDoin == 3)
+	{
+		renderer.pushCamera();
+			credits(w, h);
+		renderer.popCamera();
+	}
 	renderer.flush();
 	//ImGui::ShowDemoWindow();
 
-	ImGui::Begin("debug");
+	/*ImGui::Begin("debug");
 	ImGui::Text("Bullets 1 count: %d", (int)data.bullets.size());
 	ImGui::Text("Enemies count: %d", (int)data.enemies.size());
 	ImGui::Text("Points : %d", (int)data.points);
@@ -572,12 +695,9 @@ bool gameLogic(float deltaTime)
 	}
 
 	ImGui::SliderFloat("Player Health", &data.health, 0, 1);
-
-	ImGui::End();
+	ImGui::End();*/
 
 	return true;
-#pragma endregion
-
 }
 
 //This function might not be be called if the program is forced closed
