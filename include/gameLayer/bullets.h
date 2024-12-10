@@ -6,9 +6,10 @@ private:
 	glm::vec2 position = {};
 	glm::vec2 fireDirection = {};	
 	float speed;
+	float damage;
 public:
 	Bullets();
-	Bullets(glm::vec2, glm::vec2,bool);
+	Bullets(glm::vec2, glm::vec2,bool,float);
 	glm::vec2 getPos();
 	void render(gl2d::Renderer2D& renderer,
 		gl2d::Texture bulletsTexture, gl2d::TextureAtlasPadding bulletsAtlas
@@ -16,4 +17,5 @@ public:
 
 	void update(float deltaTime);
 	bool isEnemy;
+	float getDamage();
 };	

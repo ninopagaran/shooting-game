@@ -18,7 +18,7 @@ private:
 	float fireRange = 1.5;
 	float bulletSpeed = 2000;
 	int type;
-	
+	float damage;
 public:
 	Enemy();
 	Enemy(int, glm::vec2, float, float, float, float);
@@ -29,4 +29,5 @@ public:
 	void damageLife(float);
 	float getLife();
 	int getType();
+	float getDamage();
 };

@@ -230,7 +230,7 @@ bool gameLogic(float deltaTime)
 
 	if (platform::isLMousePressed())
 	{
-		Bullets b(data.playerPos, mouseDirection, false);
+		Bullets b(data.playerPos, mouseDirection, false, 0.1);
 
 		data.bullets.push_back(b);
 		PlaySound(shootSound);
@@ -283,7 +283,7 @@ bool gameLogic(float deltaTime)
 			if (intersectBullet(data.bullets[i].getPos(), data.playerPos,
 				jetSize))
 			{
-				data.health -= 0.1;
+				data.health -= data.bullets[i].getDamage();
 
 				data.bullets.erase(data.bullets.begin() + i);
 				i--;
@@ -350,7 +350,7 @@ bool gameLogic(float deltaTime)
 
 		if (data.enemies[i].update(deltaTime, data.playerPos))
 		{
-			Bullets b(data.enemies[i].getPos(), data.enemies[i].getView(), true);
+			Bullets b(data.enemies[i].getPos(), data.enemies[i].getView(), true, data.enemies[i].getDamage());
 			//todo speed
 			data.bullets.push_back(b);
 			if (!IsSoundPlaying(shootSound)) PlaySound(shootSound);

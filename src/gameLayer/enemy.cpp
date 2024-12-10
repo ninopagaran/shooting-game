@@ -12,6 +12,15 @@ Enemy::Enemy(int t, glm::vec2 pos, float s, float tSpeed, float fR, float fT) {
 	turnSpeed = tSpeed;
 	fireRange = fR;
 	fireTimeReset = fT;
+	
+	if (t == 0)
+		damage = 0.01;
+	if (t == 1)
+		damage = 0.05;
+	if (t == 2)
+		damage = 0.08;
+	if (t == 3)
+		damage = 0.1;
 }
 
 void Enemy::render(gl2d::Renderer2D& renderer, gl2d::Texture& sprites) {
@@ -90,4 +99,8 @@ float Enemy::getLife() {
 
 int Enemy::getType() {
 	return type;
+}
+
+float Enemy::getDamage() {
+	return damage;
 }

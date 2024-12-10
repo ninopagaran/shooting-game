@@ -5,11 +5,12 @@ Bullets::Bullets() {
 	fireDirection = { 0, 0 };
 }
 
-Bullets::Bullets(glm::vec2 pos, glm::vec2 dir, bool enemy) {
+Bullets::Bullets(glm::vec2 pos, glm::vec2 dir, bool enemy, float d) {
 	position = pos;
 	fireDirection = dir;
 	isEnemy = enemy;
-	speed = 2500;
+	speed = 2500;	
+	damage = d;
 }
 
 glm::vec2 Bullets::getPos() {
@@ -40,4 +41,8 @@ void Bullets::render(gl2d::Renderer2D& renderer, gl2d::Texture bulletsTexture, g
 
 void Bullets::update(float deltaTime) {
 	position += fireDirection * deltaTime * speed;
+}
+
+float Bullets::getDamage() {
+	return damage;
 }
