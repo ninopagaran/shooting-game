@@ -7,3 +7,10 @@ Welcome to the **CiriaBlast**!
 Click the link below to watch the demo video:
 
 [![Watch the video](https://img.youtube.com/vi/_6wVKxpgmIQ/0.jpg)](https://www.youtube.com/watch?v=_6wVKxpgmIQ)
+
+# Developers:
+  ### Ma. Jose Nadal
+  ### Mariah Zarah Gaas
+  ### Tammy Rose Putalan
+  ### Rex Russel Escarro
+  ### Eliseo P. Alcaraz
