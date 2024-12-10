@@ -15,6 +15,7 @@
 #include <cstdio>
 #include <raudio.h>
 #include <cmath>
+#include <string>
 
 #include <enemy.h>
 #include <tiledRenderer.h>
@@ -29,10 +30,10 @@ public:
 
 	float health = 1.f;
 	float spawnTimeEnemy = 3;
+	int points = 0;
 };
 
 GameData data;
-
 
 gl2d::Renderer2D renderer;
 
@@ -50,6 +51,8 @@ gl2d::TextureAtlasPadding bulletsAtlas;
 
 gl2d::Texture healthBar;
 gl2d::Texture health;
+
+gl2d::Font font;
 
 Sound shootSound;
 
@@ -98,6 +101,8 @@ bool initGame()
 
 	shootSound = LoadSound(RESOURCES_PATH "shootSfx.flac");
 	SetSoundVolume(shootSound, 0.1);
+
+	font.createFromFile(RESOURCES_PATH "roboto_black.ttf");
 
 	restartGame();
 	
@@ -246,6 +251,7 @@ bool gameLogic(float deltaTime)
 					if (data.enemies[e].getLife() <= 0)
 					{
 						//kill enemy
+						data.points += (data.enemies[e].getType() + 1);
 						data.enemies.erase(data.enemies.begin() + e);
 					}
 
@@ -364,13 +370,14 @@ bool gameLogic(float deltaTime)
 
 #pragma endregions
 	
+	
 
 	renderer.pushCamera();
 	{
 
 		glui::Frame f({ 0,0, w, h });
 
-		glui::Box healthBox = glui::Box().xLeftPerc(0.05).yTopPerc(0.05).
+		glui::Box healthBox = glui::Box().xLeftPerc(0.65).yTopPerc(0.05).
 			xDimensionPercentage(0.3).yAspectRatio(1.f / 8.f);
 
 		renderer.renderRectangle(healthBox, healthBar);
@@ -384,6 +391,10 @@ bool gameLogic(float deltaTime)
 		renderer.renderRectangle(newRect, health, Colors_White, {}, {},
 			textCoords);
 
+		std::string currentPoints = "Points: " + std::to_string(data.points);
+		const char* points = currentPoints.c_str();
+		
+		renderer.renderText(glm::vec2{ 200, 50 }, points, font, Colors_Black);
 
 	}
 	renderer.popCamera();
@@ -394,6 +405,7 @@ bool gameLogic(float deltaTime)
 	ImGui::Begin("debug");
 	ImGui::Text("Bullets 1 count: %d", (int)data.bullets.size());
 	ImGui::Text("Enemies count: %d", (int)data.enemies.size());
+	ImGui::Text("Points : %d", (int)data.points);
 
 	if (ImGui::Button("Spawn enemy"))
 	{
