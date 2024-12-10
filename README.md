@@ -1,3 +1,9 @@
- ## Watch a Demo
+# Game Project CMSC 123
 
-   <iframe width="560" height="315" src="[https://www.youtube.com/watch?v=_6wVKxpgmIQ](https://www.youtube.com/watch?v=_6wVKxpgmIQ)" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+Welcome to the **CiriaBlast**!
+
+## Watch the Demo Video
+
+Click the link below to watch the demo video:
+
+[![Watch the video](https://img.youtube.com/vi/_6wVKxpgmIQ/0.jpg)](https://www.youtube.com/watch?v=_6wVKxpgmIQ)
