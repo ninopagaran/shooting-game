@@ -67,6 +67,7 @@ gl2d::Texture loadIcon;
 gl2d::Font font;
 
 Sound shootSound;
+Sound gameOverSound;
 
 //menu
 gl2d::Texture playButton;
@@ -137,6 +138,8 @@ bool initGame()
 
 	shootSound = LoadSound(RESOURCES_PATH "shootSfx.flac");
 	SetSoundVolume(shootSound, 0.1);
+	gameOverSound = LoadSound(RESOURCES_PATH "target.ogg");
+	SetSoundVolume(gameOverSound, 0.3);
 
 	font.createFromFile(RESOURCES_PATH "Minecraft.ttf");
 
@@ -149,6 +152,7 @@ bool initGame()
 	creditsButtonAtlas = gl2d::TextureAtlasPadding(2, 1, bulletsTexture.GetSize().x, bulletsTexture.GetSize().y);
 
 	howToPlayTex.loadFromFile(RESOURCES_PATH "howToPlay.png", true);
+	creditsTex.loadFromFile(RESOURCES_PATH "credits_fn.png", true);
 	
 	menuBackground.loadFromFile(RESOURCES_PATH "ciriablast2.png", true);
 	gameoverTex.loadFromFile(RESOURCES_PATH "gameoverr.png", true);
@@ -293,6 +297,7 @@ void howToplay(int w, int h)
 
 void credits(int w, int h)
 {
+	renderer.renderRectangle({ glm::vec2{ 0,0 }, w, h, }, creditsTex);
 	if (platform::isButtonReleased(platform::Button::Escape))
 		whatYouDoin = 0;
 }
@@ -315,7 +320,6 @@ void gameover(int w, int h, int points)
 	std::string menuText = "Press ESC to return to Main Menu";
 	renderer.renderText(screenCenter - glm::vec2(50, -220) + glm::vec2(2.0f, 2.0f), menuText.c_str(), font, Colors_Black, 1.0F, 3.0F, 2.0F, true, {});
 	renderer.renderText(screenCenter - glm::vec2(50, -220), menuText.c_str(), font, Colors_White, 1.0F, 3.0F, 2.0F, true, {});
-
 
 	if (platform::isButtonReleased(platform::Button::Escape))
 		whatYouDoin = 0;
@@ -516,6 +520,7 @@ void gameplay(float deltaTime, int w, int h)
 	if (data.health <= 0)
 	{
 		//kill player
+		PlaySound(gameOverSound);
 		whatYouDoin = 4;
 	}
 	else
