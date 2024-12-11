@@ -81,6 +81,8 @@ gl2d::TextureAtlasPadding creditsButtonAtlas;
 gl2d::Texture howToPlayTex;
 gl2d::Texture creditsTex;
 
+gl2d::Texture menuBackground;
+
 bool intersectBullet(glm::vec2 bulletPos, glm::vec2 shipPos, float shipSize)
 {
 	return glm::distance(bulletPos, shipPos) <= shipSize;
@@ -147,7 +149,7 @@ bool initGame()
 
 	howToPlayTex.loadFromFile(RESOURCES_PATH "howToPlay.png", true);
 	
-
+	menuBackground.loadFromFile(RESOURCES_PATH "ciriablast2.png", true);
 	restartGame();
 	
 	return true;
@@ -226,6 +228,8 @@ void menu(int w, int h)
 
 	for (int i = 0; i < 2; i++)
 		tiledRenderer[i].render(renderer);
+
+	renderer.renderRectangle({ glm::vec2{ 0,0 }, w, h, }, menuBackground);
 
 	glm::vec2 playButtonPos = { 985,500 };
 
