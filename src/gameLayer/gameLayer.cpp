@@ -35,7 +35,7 @@ public:
 
 	std::queue<LoadBullet> jetLoad;
 
-	float health = 1.f;
+	float health = 1.0f;
 	float spawnTimeEnemy = 3;
 	int points = 0;
 };
@@ -82,6 +82,7 @@ gl2d::Texture howToPlayTex;
 gl2d::Texture creditsTex;
 
 gl2d::Texture menuBackground;
+gl2d::Texture gameoverTex;
 
 bool intersectBullet(glm::vec2 bulletPos, glm::vec2 shipPos, float shipSize)
 {
@@ -150,6 +151,7 @@ bool initGame()
 	howToPlayTex.loadFromFile(RESOURCES_PATH "howToPlay.png", true);
 	
 	menuBackground.loadFromFile(RESOURCES_PATH "ciriablast2.png", true);
+	gameoverTex.loadFromFile(RESOURCES_PATH "gameoverr.png", true);
 	restartGame();
 	
 	return true;
@@ -293,6 +295,36 @@ void credits(int w, int h)
 {
 	if (platform::isButtonReleased(platform::Button::Escape))
 		whatYouDoin = 0;
+}
+
+void gameover(int w, int h, int points) 
+{
+
+	renderer.renderRectangle({ glm::vec2{ 0,0 }, w, h, }, gameoverTex);
+
+	glm::vec2 screenCenter(w / 2.0F, h / 2.0F);
+
+	std::string finalScore = "FINAL SCORE: " + std::to_string(points);
+	renderer.renderText(screenCenter - glm::vec2(50, -50) + glm::vec2(2.0f, 2.0f), finalScore.c_str(), font, Colors_Black, 1.0F, 4.0F, 3.0F, true, {});
+	renderer.renderText(screenCenter - glm::vec2(50, -50), finalScore.c_str(), font, glm::vec4(0.780f, 0.151f, 0.0f, 1.0f), 1.0F, 4.0F, 3.0F, true, {});
+
+	std::string restartText = "Press Enter to Restart";
+	renderer.renderText(screenCenter - glm::vec2(50, -150) + glm::vec2(2.0f, 2.0f), restartText.c_str(), font, Colors_Black, 1.0F, 3.0F, 2.0F, true, {});
+	renderer.renderText(screenCenter - glm::vec2(50, -150), restartText.c_str(), font, Colors_White, 1.0F, 3.0F, 2.0F, true, {});
+
+	std::string menuText = "Press ESC to return to Main Menu";
+	renderer.renderText(screenCenter - glm::vec2(50, -220) + glm::vec2(2.0f, 2.0f), menuText.c_str(), font, Colors_Black, 1.0F, 3.0F, 2.0F, true, {});
+	renderer.renderText(screenCenter - glm::vec2(50, -220), menuText.c_str(), font, Colors_White, 1.0F, 3.0F, 2.0F, true, {});
+
+
+	if (platform::isButtonReleased(platform::Button::Escape))
+		whatYouDoin = 0;
+	else if (platform::isButtonReleased(platform::Button::Enter))
+	{
+		restartGame();
+		whatYouDoin = 1;
+	}
+	
 }
 
 
@@ -484,7 +516,7 @@ void gameplay(float deltaTime, int w, int h)
 	if (data.health <= 0)
 	{
 		//kill player
-		whatYouDoin = 0;
+		whatYouDoin = 4;
 	}
 	else
 	{
@@ -678,6 +710,12 @@ bool gameLogic(float deltaTime)
 	{
 		renderer.pushCamera();
 			credits(w, h);
+		renderer.popCamera();
+	}
+	else if (whatYouDoin == 4)
+	{
+		renderer.pushCamera();
+			gameover(w, h, data.points);
 		renderer.popCamera();
 	}
 	renderer.flush();
