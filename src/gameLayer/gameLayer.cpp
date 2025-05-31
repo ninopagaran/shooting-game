@@ -25,7 +25,7 @@
 #include <queue>
 
 
-class GameData 
+class GameData
 {
 public:
 	glm::vec2 playerPos = { 100, 100};
@@ -38,6 +38,8 @@ public:
 	float health = 1.0f;
 	float spawnTimeEnemy = 3;
 	int points = 0;
+
+  float shootCooldown = 0.0f;
 };
 
 GameData data;
@@ -104,9 +106,9 @@ bool initGame()
 	//initializing stuff for the renderer
 	gl2d::init();
 	renderer.create();
-	
+
 	//game player sprite
-	jetPlayerTexture.loadFromFile(RESOURCES_PATH "jets/jet.png", true);
+	jetPlayerTexture.loadFromFile(RESOURCES_PATH "jets/Jet.png", true);
 	botTexture[0].loadFromFile(RESOURCES_PATH "jets/1.png", true);
 	botTexture[1].loadFromFile(RESOURCES_PATH "jets/2.png", true);
 	botTexture[2].loadFromFile(RESOURCES_PATH "jets/3.png", true);
@@ -119,7 +121,7 @@ bool initGame()
 	bulletsTexture.loadFromFileWithPixelPadding
 	(RESOURCES_PATH "spaceShip/stitchedFiles/projectiles.png", 500, true);
 	bulletsAtlas = gl2d::TextureAtlasPadding(3, 2, bulletsTexture.GetSize().x, bulletsTexture.GetSize().y);
-	
+
 	reloadBullet[0].loadFromFile(RESOURCES_PATH "bullets/reload/1.png", true);
 	reloadBullet[1].loadFromFile(RESOURCES_PATH "bullets/reload/2.png", true);
 	reloadBullet[2].loadFromFile(RESOURCES_PATH "bullets/reload/3.png", true);
@@ -153,11 +155,11 @@ bool initGame()
 
 	howToPlayTex.loadFromFile(RESOURCES_PATH "howToPlay.png", true);
 	creditsTex.loadFromFile(RESOURCES_PATH "credits_fn.png", true);
-	
+
 	menuBackground.loadFromFile(RESOURCES_PATH "ciriablast2.png", true);
 	gameoverTex.loadFromFile(RESOURCES_PATH "gameoverr.png", true);
 	restartGame();
-	
+
 	return true;
 }
 
@@ -202,7 +204,7 @@ void spawnLoads() {
 
 		data.loads.push_back(l);
 	}
-	
+
 }
 
 std::string level(int points) {
@@ -212,7 +214,7 @@ std::string level(int points) {
 		return "Average";
 	else
 		return "Master";
-		
+
 }
 
 std::string strDamage(int type) {
@@ -229,7 +231,7 @@ int whatYouDoin = 0;
 const float buttonSize = 250.f;
 int presentButton = 0;
 
-void menu(int w, int h) 
+void menu(int w, int h)
 {
 
 	for (int i = 0; i < 2; i++)
@@ -239,21 +241,21 @@ void menu(int w, int h)
 
 	glm::vec2 playButtonPos = { 985,500 };
 
-	int maxButtons = 3; 
+	int maxButtons = 3;
 
 	if (platform::isButtonReleased(platform::Button::Up))
 	{
 		if (presentButton == 0)
 			presentButton = maxButtons - 1;
 		else
-			presentButton -= 1; 
+			presentButton -= 1;
 	}
 	else if (platform::isButtonReleased(platform::Button::Down))
 	{
 		if (presentButton == maxButtons - 1)
-			presentButton = 0; 
+			presentButton = 0;
 		else
-			presentButton += 1; 
+			presentButton += 1;
 	}
 
 
@@ -284,7 +286,7 @@ void menu(int w, int h)
 	else
 		renderer.renderRectangle({ playButtonPos + glm::vec2 {0, 400} - glm::vec2(buttonSize / 2,buttonSize / 2), buttonSize, buttonSize }, creditsButton, Colors_White, {}, 0, playButtonAtlas.get(1, 0));
 
-	
+
 
 }
 
@@ -302,7 +304,7 @@ void credits(int w, int h)
 		whatYouDoin = 0;
 }
 
-void gameover(int w, int h, int points) 
+void gameover(int w, int h, int points)
 {
 
 	renderer.renderRectangle({ glm::vec2{ 0,0 }, w, h, }, gameoverTex);
@@ -328,14 +330,14 @@ void gameover(int w, int h, int points)
 		restartGame();
 		whatYouDoin = 1;
 	}
-	
+
 }
 
 
 void gameplay(float deltaTime, int w, int h)
 {
 
-#pragma region movement on player 
+#pragma region movement on player
 
 	glm::vec2 move = {};
 
@@ -381,7 +383,7 @@ void gameplay(float deltaTime, int w, int h)
 
 	renderer.currentCamera.follow(data.playerPos, deltaTime * 550, 1, 150, w, h);
 
-#pragma endregion 
+#pragma endregion
 
 #pragma region render background
 
@@ -442,20 +444,25 @@ void gameplay(float deltaTime, int w, int h)
 
 #pragma endregion
 
-#pragma region handle bullets 
+#pragma region handle bullets
 
-	if (platform::isLMousePressed() && !(data.jetLoad.empty()))
-	{
-		if (data.jetLoad.front().canLoadBullet()) {
-			Bullets b(data.playerPos, mouseDirection, false, data.jetLoad.front().getDamage(), data.jetLoad.front().getType());
-			std::cout << data.jetLoad.front().getDamage() << std::endl;
-			data.bullets.push_back(b);
-			PlaySound(shootSound);
-		}
-		else
-			data.jetLoad.pop();
+  data.shootCooldown -= deltaTime;
 
-	}
+  if (platform::isButtonHeld(platform::Button::Enter) && !(data.jetLoad.empty()))
+  {
+    if(data.shootCooldown <= 0.0f){
+      if (data.jetLoad.front().canLoadBullet()) {
+        Bullets b(data.playerPos, mouseDirection, false, data.jetLoad.front().getDamage(), data.jetLoad.front().getType());
+        std::cout << data.jetLoad.front().getDamage() << std::endl;
+        data.bullets.push_back(b);
+        PlaySound(shootSound);
+
+        data.shootCooldown = 0.3f;
+      }
+      else
+        data.jetLoad.pop();
+    }
+  }
 
 
 	for (int i = 0; i < data.bullets.size(); i++)
@@ -529,7 +536,7 @@ void gameplay(float deltaTime, int w, int h)
 		data.health = glm::clamp(data.health, 0.f, 1.f);
 	}
 
-#pragma endregion 
+#pragma endregion
 
 #pragma region render bullets
 	for (auto& b : data.bullets)
@@ -686,13 +693,13 @@ bool gameLogic(float deltaTime)
 	int w = 0; int h = 0;
 	w = platform::getFrameBufferSizeX(); //window w
 	h = platform::getFrameBufferSizeY(); //window h
-	
+
 	glViewport(0, 0, w, h);
 	glClear(GL_COLOR_BUFFER_BIT); //clear screen
 
 	renderer.updateWindowMetrics(w, h);
 #pragma endregion
-	
+
 	if (whatYouDoin == 0)
 	{
 		renderer.pushCamera();
