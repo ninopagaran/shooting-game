@@ -31,6 +31,16 @@
 #include <queue>
 #include <vector>
 
+enum Gamestate {
+  MAIN_MENU,
+  IN_GAME,
+  HOW_TO_PLAY,
+  CREDITS,
+  GAMEOVER
+};
+
+Gamestate  currentGameState = MAIN_MENU;
+
 class GameData {
 public:
   glm::vec2 playerPos = {100, 100};
@@ -241,7 +251,6 @@ std::string strDamage(int type) {
 }
 const float jetSize = 180.f;
 
-int whatYouDoin = 0;
 const float buttonSize = 250.f;
 int presentButton = 0;
 
@@ -280,7 +289,7 @@ void menu(int w, int h) {
          buttonSize},
         playButton, Colors_White, {}, 0, playButtonAtlas.get(0, 0));
     if (platform::isButtonReleased(platform::Button::Enter))
-      whatYouDoin = 1;
+      currentGameState = IN_GAME;
   } else
     renderer.renderRectangle(
         {playButtonPos - glm::vec2(buttonSize / 2, buttonSize / 2), buttonSize,
@@ -294,7 +303,7 @@ void menu(int w, int h) {
                              howButton, Colors_White, {}, 0,
                              playButtonAtlas.get(0, 0));
     if (platform::isButtonReleased(platform::Button::Enter))
-      whatYouDoin = 2;
+      currentGameState = HOW_TO_PLAY;
   } else
     renderer.renderRectangle({playButtonPos + glm::vec2{0, 200} -
                                   glm::vec2(buttonSize / 2, buttonSize / 2),
@@ -309,7 +318,7 @@ void menu(int w, int h) {
                              creditsButton, Colors_White, {}, 0,
                              playButtonAtlas.get(0, 0));
     if (platform::isButtonReleased(platform::Button::Enter))
-      whatYouDoin = 3;
+      currentGameState = CREDITS;
   } else
     renderer.renderRectangle({playButtonPos + glm::vec2{0, 400} -
                                   glm::vec2(buttonSize / 2, buttonSize / 2),
@@ -327,7 +336,7 @@ void howToplay(int w, int h) {
       },
       howToPlayTex);
   if (platform::isButtonReleased(platform::Button::Escape))
-    whatYouDoin = 0;
+    currentGameState = MAIN_MENU;
 }
 
 void credits(int w, int h) {
@@ -339,7 +348,7 @@ void credits(int w, int h) {
       },
       creditsTex);
   if (platform::isButtonReleased(platform::Button::Escape))
-    whatYouDoin = 0;
+    currentGameState = MAIN_MENU;
 }
 
 void gameover(int w, int h, int points) {
@@ -377,10 +386,10 @@ void gameover(int w, int h, int points) {
                       font, Colors_White, 1.0F, 3.0F, 2.0F, true, {});
 
   if (platform::isButtonReleased(platform::Button::Escape))
-    whatYouDoin = 0;
+    currentGameState = MAIN_MENU;
   else if (platform::isButtonReleased(platform::Button::Enter)) {
     restartGame();
-    whatYouDoin = 1;
+    currentGameState = IN_GAME;
   }
 }
 
@@ -481,7 +490,7 @@ void gameplay(float deltaTime, int w, int h) {
 
   data.shootCooldown -= deltaTime;
 
-  if (platform::isButtonHeld(platform::Button::Enter) &&
+  if (platform::isLMousePressed() &&
       !(data.jetLoad.empty())) {
     if (data.shootCooldown <= 0.0f) {
       if (data.jetLoad.front().canLoadBullet()) {
@@ -546,7 +555,7 @@ void gameplay(float deltaTime, int w, int h) {
   if (data.health <= 0) {
     // kill player
     PlaySound(gameOverSound);
-    whatYouDoin = 4;
+    currentGameState = GAMEOVER;
   } else {
     data.health += deltaTime * 0.05;
     data.health = glm::clamp(data.health, 0.f, 1.f);
@@ -709,7 +718,7 @@ void gameplay(float deltaTime, int w, int h) {
   renderer.popCamera();
 
   if (platform::isButtonReleased(platform::Button::Escape))
-    whatYouDoin = 0;
+    currentGameState = MAIN_MENU;
 }
 
 bool gameLogic(float deltaTime) {
@@ -725,27 +734,34 @@ bool gameLogic(float deltaTime) {
   renderer.updateWindowMetrics(w, h);
 #pragma endregion
 
-  if (whatYouDoin == 0) {
-    renderer.pushCamera();
-    menu(w, h);
-    restartGame();
-    renderer.popCamera();
-  }
-
-  else if (whatYouDoin == 1) {
-    gameplay(deltaTime, w, h);
-  } else if (whatYouDoin == 2) {
-    renderer.pushCamera();
-    howToplay(w, h);
-    renderer.popCamera();
-  } else if (whatYouDoin == 3) {
-    renderer.pushCamera();
-    credits(w, h);
-    renderer.popCamera();
-  } else if (whatYouDoin == 4) {
-    renderer.pushCamera();
-    gameover(w, h, data.points);
-    renderer.popCamera();
+  switch(currentGameState) {
+    case MAIN_MENU:
+      renderer.pushCamera();
+      menu(w, h);
+      restartGame();
+      renderer.popCamera();
+      break;
+    case IN_GAME:
+      gameplay(deltaTime, w, h);
+      break;
+    case HOW_TO_PLAY:
+      renderer.pushCamera();
+      howToplay(w, h);
+      renderer.popCamera();
+      break;
+    case CREDITS:
+      renderer.pushCamera();
+      credits(w, h);
+      renderer.popCamera();
+      break;
+    case GAMEOVER:
+      renderer.pushCamera();
+      gameover(w, h, data.points);
+      renderer.popCamera();
+      break;
+    default:
+      std::cerr << "Unknown game state!" << std::endl;
+      return false;
   }
   renderer.flush();
   // ImGui::ShowDemoWindow();
