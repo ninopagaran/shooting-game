@@ -28,6 +28,9 @@
 #include <load.h>
 #include <tiledRenderer.h>
 
+//ui
+#include <button.h>
+
 #include <queue>
 #include <vector>
 
@@ -121,6 +124,10 @@ gl2d::Texture creditsTex;
 gl2d::Texture menuBackground;
 gl2d::Texture gameoverTex;
 
+Button playBtn;
+Button howBtn;
+Button creditsBtn;
+
 #pragma endregion
 
 #pragma region intersect restart
@@ -206,6 +213,15 @@ bool initGame() {
 
   menuBackground.loadFromFile(RESOURCES_PATH "ciriablast2.png", true);
   gameoverTex.loadFromFile(RESOURCES_PATH "gameoverr.png", true);
+
+
+  playBtn.texture = playButton;
+  playBtn.atlasPadding = playButtonAtlas;
+  howBtn.texture = howButton;
+  howBtn.atlasPadding = howButtonAtlas;
+  creditsBtn.texture = creditsButton;
+  creditsBtn.atlasPadding = creditsButtonAtlas;
+
   restartGame();
 
   return true;
@@ -300,20 +316,17 @@ int presentButton = 0;
 
 #pragma region menu functions
 
+
+
 void menu(int w, int h) {
 
   for (int i = 0; i < 2; i++)
     tiledRenderer[i].render(renderer);
 
-  renderer.renderRectangle(
-      {
-          glm::vec2{0, 0},
-          w,
-          h,
-      },
-      menuBackground);
-
   glm::vec2 playButtonPos = {985, 500};
+
+
+  renderer.renderRectangle({glm::vec2{0, 0}, w,h,},menuBackground);
 
   int maxButtons = 3;
 
@@ -329,48 +342,24 @@ void menu(int w, int h) {
       presentButton += 1;
   }
 
-  if (presentButton == 0) {
-    renderer.renderRectangle(
-        {playButtonPos - glm::vec2(buttonSize / 2, buttonSize / 2), buttonSize,
-         buttonSize},
-        playButton, Colors_White, {}, 0, playButtonAtlas.get(0, 0));
-    if (platform::isButtonReleased(platform::Button::Enter))
+  playBtn.render(renderer, playButtonPos, presentButton == 0);
+  creditsBtn.render(renderer, playButtonPos + glm::vec2{0, 200}, presentButton == 1);
+  howBtn.render(renderer, playButtonPos + glm::vec2{0, 400}, presentButton == 2);
+
+  if(platform::isButtonReleased(platform::Button::Enter))
+  switch (presentButton) {
+    case 0:
       currentGameState = IN_GAME;
-  } else
-    renderer.renderRectangle(
-        {playButtonPos - glm::vec2(buttonSize / 2, buttonSize / 2), buttonSize,
-         buttonSize},
-        playButton, Colors_White, {}, 0, playButtonAtlas.get(1, 0));
-
-  if (presentButton == 1) {
-    renderer.renderRectangle({playButtonPos + glm::vec2{0, 200} -
-                                  glm::vec2(buttonSize / 2, buttonSize / 2),
-                              buttonSize, buttonSize},
-                             howButton, Colors_White, {}, 0,
-                             playButtonAtlas.get(0, 0));
-    if (platform::isButtonReleased(platform::Button::Enter))
+      break;
+    case 1:
       currentGameState = HOW_TO_PLAY;
-  } else
-    renderer.renderRectangle({playButtonPos + glm::vec2{0, 200} -
-                                  glm::vec2(buttonSize / 2, buttonSize / 2),
-                              buttonSize, buttonSize},
-                             howButton, Colors_White, {}, 0,
-                             playButtonAtlas.get(1, 0));
-
-  if (presentButton == 2) {
-    renderer.renderRectangle({playButtonPos + glm::vec2{0, 400} -
-                                  glm::vec2(buttonSize / 2, buttonSize / 2),
-                              buttonSize, buttonSize},
-                             creditsButton, Colors_White, {}, 0,
-                             playButtonAtlas.get(0, 0));
-    if (platform::isButtonReleased(platform::Button::Enter))
+      break;
+    case 2:
       currentGameState = CREDITS;
-  } else
-    renderer.renderRectangle({playButtonPos + glm::vec2{0, 400} -
-                                  glm::vec2(buttonSize / 2, buttonSize / 2),
-                              buttonSize, buttonSize},
-                             creditsButton, Colors_White, {}, 0,
-                             playButtonAtlas.get(1, 0));
+    default:
+      break;
+  }
+
 }
 
 void howToplay(int w, int h) {
