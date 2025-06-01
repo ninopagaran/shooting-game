@@ -66,13 +66,11 @@ public:
 
   float health = 1.0f;
   float spawnTimeEnemy = 3;
-  int points = 0;
   float shootCooldown = 0.0f;
 
   int currentScore = 0;
   int highScore = 0;
   int lives = 3;
-
 };
 
 GameData data;
@@ -445,11 +443,17 @@ void gameplay(float deltaTime, int w, int h) {
 
 #pragma region level states
 
-  if (data.currentScore < 10)
+  if (data.currentScore < 10 || data.lives == 1)
   {
     currentLevel = EASY;
+	if (data.lives == 1) {
+		if (data.currentScore > data.highScore) {
+			data.highScore = data.currentScore;
+		}
+		data.currentScore = 0;
+	}
   }
-  else if (data.currentScore >= 10 && data.currentScore < 30)
+  else if (data.currentScore >= 10 && data.currentScore < 20)
   {
     currentLevel = MEDIUM;
   }
@@ -592,7 +596,6 @@ void gameplay(float deltaTime, int w, int h) {
             // kill enemy
             data.currentScore += 1;
             std::cout << "Current Score: " << data.currentScore << std::endl;
-            data.points += (data.enemies[e].getType() + 1);
             data.enemies.erase(data.enemies.begin() + e);
           }
           // std::cout << data.bullets[i].getDamage() << std::endl;
@@ -823,7 +826,7 @@ bool gameLogic(float deltaTime) {
       break;
     case GAMEOVER:
       renderer.pushCamera();
-      gameover(w, h, data.points);
+      gameover(w, h, data.highScore);
       renderer.popCamera();
       break;
     default:
