@@ -64,7 +64,7 @@ public:
   std::vector<LoadBullet> loads;
   std::queue<LoadBullet> jetLoad;
 
-  float health = 1.0f;
+  float health = 3.0f;
   float spawnTimeEnemy = 3;
   float shootCooldown = 0.0f;
 
@@ -621,14 +621,12 @@ void gameplay(float deltaTime, int w, int h) {
 
     data.bullets[i].update(deltaTime);
   }
-
+  std::cout << "health: " << data.health << std::endl;
   if (data.health <= 0) {
     // kill player
     PlaySound(gameOverSound);
     currentGameState = GAMEOVER;
-  } else {
-    data.health += deltaTime * 0.05;
-    data.health = glm::clamp(data.health, 0.f, 1.f);
+      
   }
 
 #pragma endregion
