@@ -31,6 +31,8 @@
 #include <queue>
 #include <vector>
 
+#pragma region states
+
 enum Gamestate {
   MAIN_MENU,
   IN_GAME,
@@ -39,7 +41,20 @@ enum Gamestate {
   GAMEOVER
 };
 
-Gamestate  currentGameState = MAIN_MENU;
+enum Level {
+  EASY,
+  MEDIUM,
+  HARD
+};
+
+#pragma endregion
+
+#pragma region initial states
+
+Gamestate currentGameState = MAIN_MENU;
+Level currentLevel = EASY;
+
+#pragma endregion
 
 class GameData {
 public:
@@ -47,17 +62,22 @@ public:
   std::vector<Bullets> bullets;
   std::vector<Enemy> enemies;
   std::vector<LoadBullet> loads;
-
   std::queue<LoadBullet> jetLoad;
 
   float health = 1.0f;
   float spawnTimeEnemy = 3;
   int points = 0;
-
   float shootCooldown = 0.0f;
+
+  int currentScore = 0;
+  int highScore = 0;
+  int lives = 3;
+
 };
 
 GameData data;
+
+#pragma region resources
 
 gl2d::Renderer2D renderer;
 
@@ -86,7 +106,6 @@ gl2d::Font font;
 Sound shootSound;
 Sound gameOverSound;
 
-// menu
 gl2d::Texture playButton;
 gl2d::TextureAtlasPadding playButtonAtlas;
 
@@ -183,6 +202,8 @@ bool initGame() {
 
   return true;
 }
+
+#pragma endregion
 
 void spawnEnemy() {
   int type;
