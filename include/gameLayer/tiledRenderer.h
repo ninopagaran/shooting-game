@@ -13,3 +13,5 @@ public:
 };
 
 void renderJet(gl2d::Renderer2D& renderer, glm::vec2 position, float size, gl2d::Texture texture, glm::vec2 viewDirection);
+
+void renderFullScreen(gl2d::Renderer2D&, gl2d::Texture, int, int);

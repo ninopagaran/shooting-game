@@ -35,6 +35,7 @@ void renderJet(gl2d::Renderer2D& renderer, glm::vec2 position, float size, gl2d:
 		Colors_White, {}, glm::degrees(jetAngle) + 90.f);
 }
 
-
-
+void renderFullScreen(gl2d::Renderer2D& renderer, gl2d::Texture texture, int w, int h) {
+	renderer.renderRectangle({ glm::vec2{0, 0}, w, h, },texture);
+}
 

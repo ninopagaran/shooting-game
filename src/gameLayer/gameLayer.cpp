@@ -320,15 +320,13 @@ int presentButton = 0;
 
 void menu(int w, int h) {
 
+  int maxButtons = 3;
+  glm::vec2 playButtonPos = {985, 500};
+
   for (int i = 0; i < 2; i++)
     tiledRenderer[i].render(renderer);
 
-  glm::vec2 playButtonPos = {985, 500};
-
-
   renderer.renderRectangle({glm::vec2{0, 0}, w,h,},menuBackground);
-
-  int maxButtons = 3;
 
   if (platform::isButtonReleased(platform::Button::Up)) {
     if (presentButton == 0)
@@ -363,25 +361,13 @@ void menu(int w, int h) {
 }
 
 void howToplay(int w, int h) {
-  renderer.renderRectangle(
-      {
-          glm::vec2{0, 0},
-          w,
-          h,
-      },
-      howToPlayTex);
+  renderFullScreen(renderer, howToPlayTex, w, h);
   if (platform::isButtonReleased(platform::Button::Escape))
     currentGameState = MAIN_MENU;
 }
 
 void credits(int w, int h) {
-  renderer.renderRectangle(
-      {
-          glm::vec2{0, 0},
-          w,
-          h,
-      },
-      creditsTex);
+  renderFullScreen(renderer, creditsTex, w, h);
   if (platform::isButtonReleased(platform::Button::Escape))
     currentGameState = MAIN_MENU;
 }
@@ -390,13 +376,7 @@ void credits(int w, int h) {
 
 void gameover(int w, int h, int points) {
 
-  renderer.renderRectangle(
-      {
-          glm::vec2{0, 0},
-          w,
-          h,
-      },
-      gameoverTex);
+  renderFullScreen(renderer, gameoverTex, w, h);
 
   glm::vec2 screenCenter(w / 2.0F, h / 2.0F);
 
