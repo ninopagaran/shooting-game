@@ -85,8 +85,8 @@ gl2d::Texture jetBodyTexture;
 gl2d::TextureAtlasPadding jetAtlas;
 gl2d::Texture jetPlayerTexture;
 gl2d::Texture botTexture[4];
-TiledRenderer tiledRenderer[2];
-gl2d::Texture backgroundTexture[2];
+TiledRenderer tiledRenderer[4];
+gl2d::Texture backgroundTexture[4];
 gl2d::Texture bulletsTexture;
 gl2d::TextureAtlasPadding bulletsAtlas;
 gl2d::Texture reloadBullet[3];
@@ -113,6 +113,7 @@ gl2d::Texture gameoverTex;
 
 gl2d::Texture runningTex;
 gl2d::TextureAtlasPadding runningAtlas;
+
 
 myAnimate runningAnim;
 
@@ -153,9 +154,13 @@ bool initGame() {
   botTexture[3].loadFromFile(RESOURCES_PATH "jets/4.png", true);
 
   // background
-  backgroundTexture[0].loadFromFile(RESOURCES_PATH "background/sky_bg2.jpg",
+  backgroundTexture[0].loadFromFile(RESOURCES_PATH "background/bg_purple_night.png",
                                     true);
-  backgroundTexture[1].loadFromFile(RESOURCES_PATH "background/clouds_bg2.png",
+  backgroundTexture[1].loadFromFile(RESOURCES_PATH "background/bg_stars.png",
+                                    true);
+  backgroundTexture[2].loadFromFile(RESOURCES_PATH "background/bg_cloud.png",
+                                    true);
+  backgroundTexture[3].loadFromFile(RESOURCES_PATH "background/bg_moon.png",
                                     true);
 
   bulletsTexture.loadFromFileWithPixelPadding(
@@ -167,8 +172,11 @@ bool initGame() {
   reloadBullet[1].loadFromFile(RESOURCES_PATH "bullets/reload/2.png", true);
   reloadBullet[2].loadFromFile(RESOURCES_PATH "bullets/reload/3.png", true);
 
-  tiledRenderer[0] = TiledRenderer(5000, backgroundTexture[0]);
-  tiledRenderer[1] = TiledRenderer(5000, backgroundTexture[1]);
+  tiledRenderer[0] = TiledRenderer(2000, backgroundTexture[0]);
+  tiledRenderer[1] = TiledRenderer(2000, backgroundTexture[1]);
+  tiledRenderer[2] = TiledRenderer(2000, backgroundTexture[2]);
+  tiledRenderer[3] = TiledRenderer(2000, backgroundTexture[3]);
+
 
   healthBar.loadFromFile(RESOURCES_PATH "healthBar.png", true);
   heartTex.loadFromFile(RESOURCES_PATH "heart1.png", true);
@@ -204,8 +212,8 @@ bool initGame() {
   howToPlayTex.loadFromFile(RESOURCES_PATH "howToPlay.png", true);
   creditsTex.loadFromFile(RESOURCES_PATH "credits_fn.png", true);
 
-  menuBackground.loadFromFile(RESOURCES_PATH "ciriablast2.png", true);
-  gameoverTex.loadFromFile(RESOURCES_PATH "gameoverr.png", true);
+  menuBackground.loadFromFile(RESOURCES_PATH "backgroundScreen/newBg.png", true);
+  gameoverTex.loadFromFile(RESOURCES_PATH "backgroundScreen/newBg.png", true);
 
   runningTex.loadFromFileWithPixelPadding(RESOURCES_PATH "running.png", 200, true);
   runningAtlas = gl2d::TextureAtlasPadding(10, 1, runningTex.GetSize().x,
@@ -332,10 +340,12 @@ void menu(int w, int h) {
     else
       presentButton += 1;
   }
-
+  renderFullScreen(renderer, menuBackground, w, h);
+  renderer.renderText(glm::vec2{1000, 300}, "Ciria's State", font, Colors_White, (1.5F),
+                        (4.0F), (3.0F), true);
   playBtn.render(renderer, playButtonPos, presentButton == 0);
-  creditsBtn.render(renderer, playButtonPos + glm::vec2{0, 200}, presentButton == 1);
-  howBtn.render(renderer, playButtonPos + glm::vec2{0, 400}, presentButton == 2);
+  howBtn.render(renderer, playButtonPos + glm::vec2{0, 200}, presentButton == 1);
+  creditsBtn.render(renderer, playButtonPos + glm::vec2{0, 400}, presentButton == 2);
 
 
   if(frame == 9){
@@ -346,10 +356,6 @@ void menu(int w, int h) {
       frame++;
       latency = 0.0f;
   }
-
-
-  runningAnim.render(renderer, playButtonPos - glm::vec2{0, 200}, frame, 0);
-
 
   if(platform::isButtonReleased(platform::Button::Enter))
   switch (presentButton) {
@@ -387,27 +393,21 @@ void gameover(int w, int h, int points) {
 
   glm::vec2 screenCenter(w / 2.0F, h / 2.0F);
 
+  renderer.renderText(screenCenter - glm::vec2(50, 200) + glm::vec2(2.0f, 2.0f),
+                      "GAME OVER", font, Colors_Red, 1.5F, 4.0F, 3.0F,
+                      true, {});
+
   std::string finalScore = "FINAL SCORE: " + std::to_string(points);
   renderer.renderText(screenCenter - glm::vec2(50, -50) + glm::vec2(2.0f, 2.0f),
-                      finalScore.c_str(), font, Colors_Black, 1.0F, 4.0F, 3.0F,
+                      finalScore.c_str(), font, Colors_Yellow, 1.0F, 4.0F, 3.0F,
                       true, {});
-  renderer.renderText(screenCenter - glm::vec2(50, -50), finalScore.c_str(),
-                      font, glm::vec4(0.780f, 0.151f, 0.0f, 1.0f), 1.0F, 4.0F,
-                      3.0F, true, {});
 
-  std::string restartText = "Press Enter to Restart";
-  renderer.renderText(
-      screenCenter - glm::vec2(50, -150) + glm::vec2(2.0f, 2.0f),
-      restartText.c_str(), font, Colors_Black, 1.0F, 3.0F, 2.0F, true, {});
-  renderer.renderText(screenCenter - glm::vec2(50, -150), restartText.c_str(),
-                      font, Colors_White, 1.0F, 3.0F, 2.0F, true, {});
+  renderer.renderText(screenCenter - glm::vec2(50, -150) + glm::vec2(2.0f, 2.0f),
+                      "Press Enter to Restart", font, Colors_White, 0.5F, 4.0F, 3.0F,
+                      true, {});
 
-  std::string menuText = "Press ESC to return to Main Menu";
-  renderer.renderText(
-      screenCenter - glm::vec2(50, -220) + glm::vec2(2.0f, 2.0f),
-      menuText.c_str(), font, Colors_Black, 1.0F, 3.0F, 2.0F, true, {});
-  renderer.renderText(screenCenter - glm::vec2(50, -220), menuText.c_str(),
-                      font, Colors_White, 1.0F, 3.0F, 2.0F, true, {});
+  renderer.renderText(screenCenter - glm::vec2(50, -200), "Press ESC to Return to Menu",
+                      font, Colors_White, 0.5F, 3.0F, 2.0F, true, {});
 
   if (platform::isButtonReleased(platform::Button::Escape))
     currentGameState = MAIN_MENU;
@@ -502,7 +502,7 @@ void gameplay(float deltaTime, int w, int h) {
 
 #pragma region render background
 
-  for (int i = 0; i < 2; i++)
+  for (int i = 0; i < 4; i++)
     tiledRenderer[i].render(renderer);
 
 #pragma endregion
@@ -733,7 +733,7 @@ void gameplay(float deltaTime, int w, int h) {
 
     const float heartSize = 60.0f;
     const float heartSpacing = 70.0f;
-    const float yOffset = 10.0f; 
+    const float yOffset = 10.0f;
 
 
     glm::vec2 heartBasePos = {newRect.x, newRect.y + newRect.w + yOffset};
@@ -777,7 +777,6 @@ void gameplay(float deltaTime, int w, int h) {
                             .xDimensionPercentage(0.15)
                             .yAspectRatio(1.f / 1.8f);
 
-    renderer.renderRectangle(highScoreBox, textBar);
     renderer.renderText(glm::vec2{ 820, 79 }, "High Score", font, Colors_White, (0.5F),
         (4.0F), (3.0F), true, { (0, 1), (0, 1), (0, 1), 0 });
     renderer.renderText(glm::vec2{ 1045, 74 }, hScore, font, Colors_White, (0.6F),
@@ -878,7 +877,7 @@ bool gameLogic(float deltaTime) {
   ImGui::Begin("debug");
   ImGui::Text("Bullets 1 count: %d", (int)data.bullets.size());
   ImGui::Text("Enemies count: %d", (int)data.enemies.size());
-  ImGui::Text("Points : %d", (int)data.points);
+  ImGui::Text("Points : %d", (int)data.currentScore);
 
   if (ImGui::Button("Spawn enemy"))
   {

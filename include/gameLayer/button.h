@@ -1,7 +1,6 @@
 #pragma once
 #include <gl2d/gl2d.h>
 
-
 class Button{
 public:
     float buttonSize = 250.f;
