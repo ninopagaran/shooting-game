@@ -831,12 +831,6 @@ void gameplay(float deltaTime, int w, int h) {
                         .xDimensionPercentage(0.06)
                         .yAspectRatio(1.f / 0.9f);
 
-    //glui::Box level3 = glui::Box()
-    //                    .xLeftPerc(0.07)
-    //                    .yTopPerc(0.15)
-    //                    .xDimensionPercentage(0.08)
-    //                    .yAspectRatio(1.f / 1.8f);
-
 	if (currentLevel == "EASY")
 		renderer.renderRectangle(level1, textBar);
     else if (currentLevel == "MEDIUM") {
