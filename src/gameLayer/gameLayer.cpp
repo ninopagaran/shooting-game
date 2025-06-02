@@ -65,10 +65,13 @@ public:
   std::vector<Enemy> enemies;
   std::vector<LoadBullet> loads;
   std::queue<LoadBullet> jetLoad;
+  std::vector<glm::vec2> healPowerUpPositions; 
 
   float health = 1.0f;
   float spawnTimeEnemy = 3;
   float shootCooldown = 0.0f;
+  float spawnTimeHealPowerUp = 10.0f;
+
 
   int currentScore = 0;
   int highScore = 0;
@@ -110,7 +113,7 @@ gl2d::Texture howToPlayTex;
 gl2d::Texture creditsTex;
 gl2d::Texture menuBackground;
 gl2d::Texture gameoverTex;
-
+gl2d::Texture healPowerUpTexture; 
 
 gl2d::Texture runningTex;
 gl2d::TextureAtlasPadding runningAtlas;
@@ -175,6 +178,8 @@ bool initGame() {
   reloadBulletAtlas[0] = gl2d::TextureAtlasPadding(20, 1, reloadBullet[0].GetSize().x,reloadBullet[0].GetSize().y);
   reloadBulletAtlas[1] = gl2d::TextureAtlasPadding(20, 1, reloadBullet[1].GetSize().x,reloadBullet[0].GetSize().y);
   reloadBulletAtlas[2] = gl2d::TextureAtlasPadding(20, 1, reloadBullet[2].GetSize().x,reloadBullet[0].GetSize().y);
+
+  healPowerUpTexture.loadFromFile(RESOURCES_PATH "heal.png", true);
 
   tiledRenderer[0] = TiledRenderer(2000, backgroundTexture[0]);
   tiledRenderer[1] = TiledRenderer(2000, backgroundTexture[1]);
@@ -291,6 +296,20 @@ void spawnLoads() {
     LoadBullet l(posBullet, typeBullet, load);
 
     data.loads.push_back(l);
+  }
+}
+
+void spawnHealPowerUp() {
+
+  if (data.healPowerUpPositions.size() < 10 && (data.lives < 3 || (data.lives == 3 && data.health < 1.0f))) {
+    glm::vec2 offset(1500, 0);
+    glm::vec2 offsetPowerUp = glm::vec2(
+        glm::vec4(offset, 0, 1) *
+        glm::rotate(glm::mat4(1.f), glm::radians((float)(rand() % 360)),
+                    glm::vec3(0, 0, 1)));
+    glm::vec2 posPowerUp = data.playerPos + offsetPowerUp;
+    
+    data.healPowerUpPositions.push_back(posPowerUp);
   }
 }
 
@@ -446,6 +465,35 @@ int framexBullet = 0;
 
 void gameplay(float deltaTime, int w, int h) {
 
+#pragma region level states
+
+  if (data.currentScore < 5 || (data.lives == 1 && !scoreReset))
+  {
+    currentLevel = EASY;
+	if (data.lives == 1 && !scoreReset) {
+		if (data.currentScore > data.highScore) {
+			data.highScore = data.currentScore;
+		}
+		data.currentScore = 0;
+        scoreReset = true;
+	}
+  }
+  else if (data.currentScore >= 5 && data.currentScore < 10)
+  {
+    currentLevel = MEDIUM;
+  }
+  else
+  {
+    currentLevel = HARD;
+  }
+
+  if (data.lives > 1) {
+      scoreReset = false;
+  }
+
+#pragma endregion
+
+
 #pragma region movement on player
 
   glm::vec2 move = {};
@@ -472,6 +520,16 @@ void gameplay(float deltaTime, int w, int h) {
     move *= deltaTime * 1500; // 200 pixels per seccond
     data.playerPos += move;
   }
+
+#pragma endregion
+
+#pragma region spawn heal powerup
+  data.spawnTimeHealPowerUp -= deltaTime;
+  if (data.spawnTimeHealPowerUp <= 0.0f) {
+    data.spawnTimeHealPowerUp = rand() % 10 + 5;
+    spawnHealPowerUp();
+  }
+
 
 #pragma endregion
 
@@ -546,6 +604,34 @@ void gameplay(float deltaTime, int w, int h) {
 
 #pragma endregion
 
+#pragma region render and handle heal powerups
+  for (int i = 0; i < data.healPowerUpPositions.size(); i++) {
+    renderer.renderRectangle({data.healPowerUpPositions[i], 100.f, 100.f}, 
+                             healPowerUpTexture, Colors_White, {}, {});
+
+
+    if (glm::distance(data.playerPos, data.healPowerUpPositions[i]) > 4000.f) {
+      data.healPowerUpPositions.erase(data.healPowerUpPositions.begin() + i);
+      i--;
+      continue;
+    }
+
+
+    if (intersectBullet(data.healPowerUpPositions[i], data.playerPos, jetSize)) { 
+      if (data.lives < 3) {
+        data.lives++;
+
+      } else if (data.lives == 3) { 
+        data.health = 1.0f;
+      }
+      
+      data.healPowerUpPositions.erase(data.healPowerUpPositions.begin() + i);
+      i--;
+    }
+  }
+#pragma endregion
+
+
 #pragma region handle bullets
 
   data.shootCooldown -= deltaTime;
@@ -587,20 +673,10 @@ void gameplay(float deltaTime, int w, int h) {
             #pragma region change level by score
 
             data.currentScore += 1;
-            changeLevelByScore++;
-            if(changeLevelByScore < 5) {
-              currentLevel = EASY;
-            } else if (changeLevelByScore >= 5 && changeLevelByScore < 10) {
-              currentLevel = MEDIUM;
-            } else if (changeLevelByScore >= 10) {
-              currentLevel = HARD;
-            }
-            #pragma endregion
-
 			data.counter++;
 			if (data.counter >= 10) {
 				data.counter = 0;
-				recoverHealth();
+				recoverHealth(); 
 			}
             std::cout << "Current Score: " << data.currentScore << std::endl;
             data.enemies.erase(data.enemies.begin() + e);
@@ -618,7 +694,9 @@ void gameplay(float deltaTime, int w, int h) {
       }
     } else {
       if (intersectBullet(data.bullets[i].getPos(), data.playerPos, jetSize)) {
-        data.health -= data.bullets[i].getDamage();
+        data.health -= data.bullets[i].getDamage(); // Player takes damage
+
+        // DEMOTION LOGIC IS REMOVED FROM HERE
 
         data.bullets.erase(data.bullets.begin() + i);
         i--;
@@ -633,39 +711,13 @@ void gameplay(float deltaTime, int w, int h) {
 
   if (data.health <= 0) {
     data.lives--;
-    switch(currentLevel) {
-      case EASY:
-        currentLevel = EASY;
-        break;
-      case MEDIUM:
-        currentLevel = EASY;
-        changeLevelByScore = 0;
-        break;
-      case HARD:
-        currentLevel = MEDIUM;
-        changeLevelByScore = 5;
-        break;
-      default:
-        currentLevel = EASY;
-        break;
-    }
-
-    if(data.lives == 1) {
-      currentLevel = EASY;
-      if(data.currentScore > data.highScore) {
-        data.highScore = data.currentScore;
-      }
-      data.currentScore = 0;
-      changeLevelByScore = 0;
-    }
-  #pragma endregion
-
     if (data.lives == 0) {
         // kill player
         PlaySound(gameOverSound);
         currentGameState = GAMEOVER;
-    } else {
-      data.health = 1.0f;
+    }
+    else {
+		data.health = 1.0f;
     }
 
   }
@@ -741,9 +793,26 @@ void gameplay(float deltaTime, int w, int h) {
     d = "0";
 
   std::string remLoad = std::to_string(data.jetLoad.size());
-  std::string currentLevel = level();
+  std::string currentLevelStr = level(); 
   std::string currentPoints = std::to_string(data.currentScore);
   std::string highScoreStr = std::to_string(data.highScore);
+
+  // Calculate points to next level
+  std::string pointsToNextLevelStr;
+  if (currentLevel == EASY) {
+    int pointsNeeded = 5 - changeLevelByScore;
+    pointsToNextLevelStr = "Next Lvl: " + std::to_string(std::max(0, pointsNeeded));
+  } else if (currentLevel == MEDIUM) {
+    int pointsNeeded = 10 - changeLevelByScore;
+    pointsToNextLevelStr = "Next Lvl: " + std::to_string(std::max(0, pointsNeeded));
+  } else { // HARD
+    pointsToNextLevelStr = "Max Level";
+  }
+
+  // Calculate points to next heal
+  int pointsToHeal = 10 - data.counter;
+  std::string pointsToNextHealStr = "Next Heal: " + std::to_string(pointsToHeal);
+
 
  renderer.pushCamera();
   {
@@ -786,7 +855,7 @@ void gameplay(float deltaTime, int w, int h) {
 
     const char *points = currentPoints.c_str();
     const char *hScore = highScoreStr.c_str();
-    const char *myLevel = currentLevel.c_str();
+    const char *myLevel = currentLevelStr.c_str();
     const char *load = remLoad.c_str();
     const char *damage = d.c_str();
 
@@ -837,28 +906,36 @@ void gameplay(float deltaTime, int w, int h) {
                         .xDimensionPercentage(0.06)
                         .yAspectRatio(1.f / 0.9f);
 
-	if (currentLevel == "EASY")
-		renderer.renderRectangle(level1, textBar);
-    else if (currentLevel == "MEDIUM") {
-		renderer.renderRectangle(level2, textBar);
+  if (currentLevel == EASY)
+    renderer.renderRectangle(level1, textBar);
+    else if (currentLevel == MEDIUM) {
+    renderer.renderRectangle(level2, textBar);
     }
     else {
-		renderer.renderRectangle(level3, textBar);
+    renderer.renderRectangle(level3, textBar);
     }
 
 
     //level section
-    renderer.renderText(glm::vec2{115, 231}, "EASY", font, currentLevel == "EASY" ? Colors_Black : Colors_White, (0.5F),
+    renderer.renderText(glm::vec2{115, 231}, "EASY", font, currentLevelStr == "EASY" ? Colors_Black : Colors_White, (0.5F),
         (4.0F), (3.0F), true, { (0, 0), (0, 0), (0, 0), 0 });
 
-    renderer.renderText(glm::vec2{ 260, 231 }, "MEDIUM", font, currentLevel == "MEDIUM" ? Colors_Black : Colors_White, (0.5F),
+    renderer.renderText(glm::vec2{ 260, 231 }, "MEDIUM", font, currentLevelStr == "MEDIUM" ? Colors_Black : Colors_White, (0.5F),
         (4.0F), (3.0F), true, { (0, 0), (0, 0), (0, 0), 0 });
 
-    renderer.renderText(glm::vec2{ 420, 231 }, "HARD", font, currentLevel == "HARD" ? Colors_Black : Colors_White, (0.5F),
+    renderer.renderText(glm::vec2{ 420, 231 }, "HARD", font, currentLevelStr == "HARD" ? Colors_Black : Colors_White, (0.5F),
         (4.0F), (3.0F), true, { (0, 0), (0, 0), (0, 0), 0 });
 
-    renderer.renderText(glm::vec2{ 500, 231 }, std::to_string(changeLevelByScore).c_str(), font, Colors_White, (0.5F),
-        (4.0F), (3.0F), true, { (0, 0), (0, 0), (0, 0), 0 });
+
+    // Add new indicators
+    float textYOffset = 231.0f + 30.0f; // Start Y position for new text
+    renderer.renderText(glm::vec2{115, textYOffset}, pointsToNextLevelStr.c_str(), font, Colors_White, (0.4F),
+                        (3.0F), (2.0F), true);
+
+    textYOffset += 25.0f; // Increment Y for the next line
+    renderer.renderText(glm::vec2{115, textYOffset}, pointsToNextHealStr.c_str(), font, Colors_White, (0.4F),
+                        (3.0F), (2.0F), true);
+
 
     glui::Box damageBox = glui::Box()
                               .xLeftPerc(0.81)
