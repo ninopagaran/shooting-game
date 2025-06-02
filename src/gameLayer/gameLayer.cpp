@@ -629,10 +629,9 @@ void gameplay(float deltaTime, int w, int h) {
       if (data.lives < 3) {
         data.lives++;
 
-      } else if (data.lives == 3) { 
+      } else if (data.lives == 3) {
         data.health = 1.0f;
       }
-      
       data.healPowerUpPositions.erase(data.healPowerUpPositions.begin() + i);
       i--;
     }
@@ -644,7 +643,7 @@ void gameplay(float deltaTime, int w, int h) {
 
   data.shootCooldown -= deltaTime;
 
-  if (platform::isLMousePressed() &&
+  if (platform::isLMouseHeld() &&
       !(data.jetLoad.empty())) {
     if (data.shootCooldown <= 0.0f) {
       if (data.jetLoad.front().canLoadBullet()) {
@@ -1025,23 +1024,23 @@ bool gameLogic(float deltaTime) {
   renderer.flush();
   // ImGui::ShowDemoWindow();
 
-  ImGui::Begin("debug");
-  ImGui::Text("Bullets 1 count: %d", (int)data.bullets.size());
-  ImGui::Text("Enemies count: %d", (int)data.enemies.size());
-  ImGui::Text("Points : %d", (int)data.currentScore);
+  // ImGui::Begin("debug");
+  // ImGui::Text("Bullets 1 count: %d", (int)data.bullets.size());
+  // ImGui::Text("Enemies count: %d", (int)data.enemies.size());
+  // ImGui::Text("Points : %d", (int)data.currentScore);
 
-  if (ImGui::Button("Spawn enemy"))
-  {
-          spawnEnemy();
-  }
+  // if (ImGui::Button("Spawn enemy"))
+  // {
+  //         spawnEnemy();
+  // }
 
-  if (ImGui::Button("Reset game"))
-  {
-          restartGame();
-  }
+  // if (ImGui::Button("Reset game"))
+  // {
+  //         restartGame();
+  // }
 
-  ImGui::SliderFloat("Player Health", &data.health, 0, 1);
-  ImGui::End();
+  // ImGui::SliderFloat("Player Health", &data.health, 0, 1);
+  // ImGui::End();
 
   return true;
 }
