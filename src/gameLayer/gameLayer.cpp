@@ -113,7 +113,8 @@ gl2d::Texture howToPlayTex;
 gl2d::Texture creditsTex;
 gl2d::Texture menuBackground;
 gl2d::Texture gameoverTex;
-gl2d::Texture healPowerUpTexture; 
+gl2d::Texture healPowerUpTexture;
+gl2d::TextureAtlasPadding healPowerUpTextureAtlas;
 
 gl2d::Texture runningTex;
 gl2d::TextureAtlasPadding runningAtlas;
@@ -179,7 +180,9 @@ bool initGame() {
   reloadBulletAtlas[1] = gl2d::TextureAtlasPadding(20, 1, reloadBullet[1].GetSize().x,reloadBullet[0].GetSize().y);
   reloadBulletAtlas[2] = gl2d::TextureAtlasPadding(20, 1, reloadBullet[2].GetSize().x,reloadBullet[0].GetSize().y);
 
-  healPowerUpTexture.loadFromFile(RESOURCES_PATH "heal.png", true);
+  healPowerUpTexture.loadFromFileWithPixelPadding(RESOURCES_PATH "HEAL.png", 150, true);
+  healPowerUpTextureAtlas = gl2d::TextureAtlasPadding(20, 1, healPowerUpTexture.GetSize().x,
+      healPowerUpTexture.GetSize().y);
 
   tiledRenderer[0] = TiledRenderer(2000, backgroundTexture[0]);
   tiledRenderer[1] = TiledRenderer(2000, backgroundTexture[1]);
@@ -219,7 +222,7 @@ bool initGame() {
       2, 1, bulletsTexture.GetSize().x, bulletsTexture.GetSize().y);
 
   howToPlayTex.loadFromFile(RESOURCES_PATH "howToPlay.png", true);
-  creditsTex.loadFromFile(RESOURCES_PATH "credits_fn.png", true);
+  creditsTex.loadFromFile(RESOURCES_PATH "GameCredits.png", true);
 
   menuBackground.loadFromFile(RESOURCES_PATH "backgroundScreen/newBg.png", true);
   gameoverTex.loadFromFile(RESOURCES_PATH "backgroundScreen/newBg.png", true);
@@ -301,14 +304,14 @@ void spawnLoads() {
 
 void spawnHealPowerUp() {
 
-  if (data.healPowerUpPositions.size() < 10 && (data.lives < 3 || (data.lives == 3 && data.health < 1.0f))) {
+  if (data.healPowerUpPositions.size() < 20 && (data.lives < 3 || (data.lives == 3 && data.health < 1.0f))) {
     glm::vec2 offset(1500, 0);
     glm::vec2 offsetPowerUp = glm::vec2(
         glm::vec4(offset, 0, 1) *
         glm::rotate(glm::mat4(1.f), glm::radians((float)(rand() % 360)),
                     glm::vec3(0, 0, 1)));
     glm::vec2 posPowerUp = data.playerPos + offsetPowerUp;
-    
+
     data.healPowerUpPositions.push_back(posPowerUp);
   }
 }
@@ -364,8 +367,12 @@ void menu(int w, int h) {
       presentButton += 1;
   }
   renderFullScreen(renderer, menuBackground, w, h);
-  renderer.renderText(glm::vec2{1000, 300}, "Ciria's State", font, Colors_White, (1.5F),
+  renderer.renderText(glm::vec2{850, 300}, "Ciria's State", font, Colors_White, (1.5F),
                         (4.0F), (3.0F), true);
+
+	renderer.renderRectangle({ glm::vec2{1300, 300} - glm::vec2(200.0f / 2, 200.f / 2)
+	, 200,200 }, jetPlayerTexture,
+		Colors_White, {}, 20.0f);
   playBtn.render(renderer, playButtonPos, presentButton == 0);
   howBtn.render(renderer, playButtonPos + glm::vec2{0, 200}, presentButton == 1);
   creditsBtn.render(renderer, playButtonPos + glm::vec2{0, 400}, presentButton == 2);
@@ -605,9 +612,10 @@ void gameplay(float deltaTime, int w, int h) {
 #pragma endregion
 
 #pragma region render and handle heal powerups
+
+
   for (int i = 0; i < data.healPowerUpPositions.size(); i++) {
-    renderer.renderRectangle({data.healPowerUpPositions[i], 100.f, 100.f}, 
-                             healPowerUpTexture, Colors_White, {}, {});
+      renderer.renderRectangle({data.healPowerUpPositions[i], 150, 150}, healPowerUpTexture, Colors_White, glm::vec2(0.5f, 0.5f), 0, healPowerUpTextureAtlas.get(framexBullet, 0));
 
 
     if (glm::distance(data.playerPos, data.healPowerUpPositions[i]) > 4000.f) {
