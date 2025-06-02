@@ -431,14 +431,14 @@ void recoverHealth() {
 	}
 }
 
+bool resetLevel = false;
+bool scoreReset = false;
 
 void gameplay(float deltaTime, int w, int h) {
 
 #pragma region level states
 
-    static bool scoreReset = false;
-
-  if (data.currentScore < 5 || data.lives == 1)
+  if (data.currentScore < 5 || (data.lives == 1 && !scoreReset))
   {
     currentLevel = EASY;
 	if (data.lives == 1 && !scoreReset) {
@@ -788,13 +788,34 @@ void gameplay(float deltaTime, int w, int h) {
                         (4.0F), (3.0F), true);\
 
 
+
     glui::Box level1 = glui::Box()
                         .xLeftPerc(0.03)
-                        .yTopPerc(0.15)
-                        .xDimensionPercentage(0.08)
-                        .yAspectRatio(1.f / 1.8f);
+                        .yTopPerc(0.165)
+                        .xDimensionPercentage(0.06)
+                        .yAspectRatio(1.f / 0.90f);
 
-    renderer.renderRectangle(level1, textBar);
+    glui::Box level2 = glui::Box()
+                        .xLeftPerc(0.095)
+                        .yTopPerc(0.165)
+                        .xDimensionPercentage(0.08)
+                        .yAspectRatio(1.f / 1.2f);
+
+    glui::Box level3 = glui::Box()
+                        .xLeftPerc(0.188)
+                        .yTopPerc(0.165)
+                        .xDimensionPercentage(0.06)
+                        .yAspectRatio(1.f / 0.9f);
+
+	if (currentLevel == "EASY")
+		renderer.renderRectangle(level1, textBar);
+    else if (currentLevel == "MEDIUM") {
+		renderer.renderRectangle(level2, textBar);
+    }
+    else {
+		renderer.renderRectangle(level3, textBar);
+    }
+
 
     //level section 
     renderer.renderText(glm::vec2{115, 231}, "EASY", font, currentLevel == "EASY" ? Colors_Black : Colors_White, (0.5F),
