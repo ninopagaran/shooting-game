@@ -154,14 +154,14 @@ bool initGame() {
   botTexture[3].loadFromFile(RESOURCES_PATH "jets/4.png", true);
 
   // background
-  backgroundTexture[0].loadFromFile(RESOURCES_PATH "background/bg_purple_night.png",
-                                    true);
   backgroundTexture[1].loadFromFile(RESOURCES_PATH "background/bg_stars.png",
+      true);
+  backgroundTexture[0].loadFromFile(RESOURCES_PATH "background/bg_purple_night.png",
                                     true);
   backgroundTexture[2].loadFromFile(RESOURCES_PATH "background/bg_cloud.png",
                                     true);
-  backgroundTexture[3].loadFromFile(RESOURCES_PATH "background/bg_moon.png",
-                                    true);
+  //backgroundTexture[3].loadFromFile(RESOURCES_PATH "background/bg_moon.png",
+  //                                  true);
 
   bulletsTexture.loadFromFileWithPixelPadding(
       RESOURCES_PATH "spaceShip/stitchedFiles/projectiles.png", 500, true);
@@ -175,7 +175,7 @@ bool initGame() {
   tiledRenderer[0] = TiledRenderer(2000, backgroundTexture[0]);
   tiledRenderer[1] = TiledRenderer(2000, backgroundTexture[1]);
   tiledRenderer[2] = TiledRenderer(2000, backgroundTexture[2]);
-  tiledRenderer[3] = TiledRenderer(2000, backgroundTexture[3]);
+  //tiledRenderer[3] = TiledRenderer(2000, backgroundTexture[3]);
 
 
   healthBar.loadFromFile(RESOURCES_PATH "healthBar.png", true);
@@ -502,7 +502,7 @@ void gameplay(float deltaTime, int w, int h) {
 
 #pragma region render background
 
-  for (int i = 0; i < 4; i++)
+  for (int i = 0; i < 3; i++)
     tiledRenderer[i].render(renderer);
 
 #pragma endregion
