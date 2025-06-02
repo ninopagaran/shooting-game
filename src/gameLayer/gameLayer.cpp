@@ -815,11 +815,36 @@ void gameplay(float deltaTime, int w, int h) {
 
     glui::Box level1 = glui::Box()
                         .xLeftPerc(0.03)
-                        .yTopPerc(0.15)
-                        .xDimensionPercentage(0.08)
-                        .yAspectRatio(1.f / 1.8f);
+                        .yTopPerc(0.165)
+                        .xDimensionPercentage(0.06)
+                        .yAspectRatio(1.f / 0.90f);
 
-    renderer.renderRectangle(level1, textBar);
+    glui::Box level2 = glui::Box()
+                        .xLeftPerc(0.095)
+                        .yTopPerc(0.165)
+                        .xDimensionPercentage(0.08)
+                        .yAspectRatio(1.f / 1.2f);
+
+    glui::Box level3 = glui::Box()
+                        .xLeftPerc(0.188)
+                        .yTopPerc(0.165)
+                        .xDimensionPercentage(0.06)
+                        .yAspectRatio(1.f / 0.9f);
+
+    //glui::Box level3 = glui::Box()
+    //                    .xLeftPerc(0.07)
+    //                    .yTopPerc(0.15)
+    //                    .xDimensionPercentage(0.08)
+    //                    .yAspectRatio(1.f / 1.8f);
+
+	if (currentLevel == "EASY")
+		renderer.renderRectangle(level1, textBar);
+    else if (currentLevel == "MEDIUM") {
+		renderer.renderRectangle(level2, textBar);
+    }
+    else {
+		renderer.renderRectangle(level3, textBar);
+    }
 
     //level section 
     renderer.renderText(glm::vec2{115, 231}, "EASY", font, currentLevel == "EASY" ? Colors_Black : Colors_White, (0.5F),
