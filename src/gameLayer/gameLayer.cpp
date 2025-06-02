@@ -53,7 +53,7 @@ enum Level {
 
 #pragma region initial states
 
-Gamestate currentGameState = MAIN_MENU;
+Gamestate currentGameState = GAMEOVER;
 Level currentLevel = EASY;
 
 #pragma endregion
@@ -402,11 +402,11 @@ void gameover(int w, int h, int points) {
                       finalScore.c_str(), font, Colors_Yellow, 1.0F, 4.0F, 3.0F,
                       true, {});
 
-  renderer.renderText(screenCenter - glm::vec2(50, -150) + glm::vec2(2.0f, 2.0f),
+  renderer.renderText(screenCenter - glm::vec2(50, -220) + glm::vec2(2.0f, 2.0f),
                       "Press Enter to Restart", font, Colors_White, 0.5F, 4.0F, 3.0F,
                       true, {});
 
-  renderer.renderText(screenCenter - glm::vec2(50, -200), "Press ESC to Return to Menu",
+  renderer.renderText(screenCenter - glm::vec2(50, -285), "Press ESC to Return to Menu",
                       font, Colors_White, 0.5F, 3.0F, 2.0F, true, {});
 
   if (platform::isButtonReleased(platform::Button::Escape))
@@ -438,7 +438,7 @@ void gameplay(float deltaTime, int w, int h) {
 
     static bool scoreReset = false;
 
-  if (data.currentScore < 10 || data.lives == 1)
+  if (data.currentScore < 5 || data.lives == 1)
   {
     currentLevel = EASY;
 	if (data.lives == 1 && !scoreReset) {
@@ -449,7 +449,7 @@ void gameplay(float deltaTime, int w, int h) {
         scoreReset = true;
 	}
   }
-  else if (data.currentScore >= 10 && data.currentScore < 20)
+  else if (data.currentScore >= 5 && data.currentScore < 10)
   {
     currentLevel = MEDIUM;
   }
@@ -715,10 +715,12 @@ void gameplay(float deltaTime, int w, int h) {
   std::string currentPoints = std::to_string(data.currentScore);
   std::string highScoreStr = std::to_string(data.highScore);
 
-  renderer.pushCamera();
+ renderer.pushCamera();
   {
 
     glui::Frame f({0, 0, w, h});
+
+
 
     glui::Box healthBox = glui::Box()
                               .xLeftPerc(0.65)
@@ -733,7 +735,7 @@ void gameplay(float deltaTime, int w, int h) {
 
     const float heartSize = 60.0f;
     const float heartSpacing = 70.0f;
-    const float yOffset = 10.0f;
+    const float yOffset = 10.0f; 
 
 
     glm::vec2 heartBasePos = {newRect.x, newRect.y + newRect.w + yOffset};
@@ -758,45 +760,55 @@ void gameplay(float deltaTime, int w, int h) {
     const char *load = remLoad.c_str();
     const char *damage = d.c_str();
 
-    glui::Box levelBox = glui::Box()
+    glui::Box highScoreBox = glui::Box()
                              .xLeftPerc(0.03)
                              .yTopPerc(0.01)
                              .xDimensionPercentage(0.15)
                              .yAspectRatio(1.f / 1.8f);
 
-    renderer.renderRectangle(levelBox, textBar);
+    renderer.renderRectangle(highScoreBox, textBar);
 
-    renderer.renderText(glm::vec2{200, 79}, "Level", font, Colors_White, (0.5F),
+    renderer.renderText(glm::vec2{200, 79}, "High Score", font, Colors_White, (0.5F),
                         (4.0F), (3.0F), true, {(0, 0), (0, 0), (0, 0), 0});
-    renderer.renderText(glm::vec2{460, 77}, myLevel, font, Colors_White, (0.6F),
+    renderer.renderText(glm::vec2{460, 77}, hScore, font, Colors_White, (0.6F),
                         (4.0F), (3.0F), true);
 
-    glui::Box highScoreBox = glui::Box()
-                            .xLeftPerc(0.35)
-                            .yTopPerc(0.01)
-                            .xDimensionPercentage(0.15)
-                            .yAspectRatio(1.f / 1.8f);
 
-    renderer.renderText(glm::vec2{ 820, 79 }, "High Score", font, Colors_White, (0.5F),
-        (4.0F), (3.0F), true, { (0, 1), (0, 1), (0, 1), 0 });
-    renderer.renderText(glm::vec2{ 1045, 74 }, hScore, font, Colors_White, (0.6F),
-        (4.0F), (3.0F), true);
 
     glui::Box scoreBox = glui::Box()
-                             .xLeftPerc(0.35)
+                             .xLeftPerc(0.03)
                              .yTopPerc(0.08)
                              .xDimensionPercentage(0.15)
                              .yAspectRatio(1.f / 1.8f);
 
     renderer.renderRectangle(scoreBox, textBar);
-    renderer.renderText(glm::vec2{820, 149}, "Score", font, Colors_White, (0.5F),
+    renderer.renderText(glm::vec2{200, 155}, "Score", font, Colors_White, (0.5F),
                         (4.0F), (3.0F), true, {(0, 1), (0, 1), (0, 1), 0});
-    renderer.renderText(glm::vec2{1045, 144}, points, font, Colors_White, (0.6F),
-                        (4.0F), (3.0F), true);
+    renderer.renderText(glm::vec2{460, 144}, points, font, Colors_White, (0.6F),
+                        (4.0F), (3.0F), true);\
+
+
+    glui::Box level1 = glui::Box()
+                        .xLeftPerc(0.03)
+                        .yTopPerc(0.15)
+                        .xDimensionPercentage(0.08)
+                        .yAspectRatio(1.f / 1.8f);
+
+    renderer.renderRectangle(level1, textBar);
+
+    //level section 
+    renderer.renderText(glm::vec2{115, 231}, "EASY", font, currentLevel == "EASY" ? Colors_Black : Colors_White, (0.5F),
+        (4.0F), (3.0F), true, { (0, 0), (0, 0), (0, 0), 0 });
+
+    renderer.renderText(glm::vec2{ 260, 231 }, "MEDIUM", font, currentLevel == "MEDIUM" ? Colors_Black : Colors_White, (0.5F),
+        (4.0F), (3.0F), true, { (0, 0), (0, 0), (0, 0), 0 });   
+
+    renderer.renderText(glm::vec2{ 420, 231 }, "HARD", font, currentLevel == "HARD" ? Colors_Black : Colors_White, (0.5F),
+        (4.0F), (3.0F), true, { (0, 0), (0, 0), (0, 0), 0 });
 
     glui::Box damageBox = glui::Box()
-                              .xLeftPerc(0.75)
-                              .yTopPerc(0.17)
+                              .xLeftPerc(0.81)
+                              .yTopPerc(0.18)
                               .xDimensionPercentage(0.03)
                               .yAspectRatio(0.7);
 
@@ -813,14 +825,14 @@ void gameplay(float deltaTime, int w, int h) {
                         (0.5F), (4.0F), (3.0F), true);
 
     glui::Box loadBox = glui::Box()
-                            .xLeftPerc(0.78)
+                            .xLeftPerc(0.815)
                             .yTopPerc(0.12)
                             .xDimensionPercentage(0.023)
                             .yAspectRatio(1);
     renderer.renderRectangle(loadBox, loadIcon);
-    renderer.renderText(glm::vec2{1725, heartBasePos.y + 5}, "Load: ", font, Colors_White,
+    renderer.renderText(glm::vec2{1670, heartBasePos.y + 20}, "Load: ", font, Colors_White,
                         (0.5F), (4.0F), (3.0F), true);
-    renderer.renderText(glm::vec2{1790, heartBasePos.y + 5}, load, font, Colors_White, (0.5F),
+    renderer.renderText(glm::vec2{1730, heartBasePos.y + 15}, load, font, Colors_White, (0.5F),
                         (4.0F), (3.0F), true);
   }
   renderer.popCamera();
