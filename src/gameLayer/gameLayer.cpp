@@ -173,9 +173,9 @@ bool initGame() {
   bulletsAtlas = gl2d::TextureAtlasPadding(3, 2, bulletsTexture.GetSize().x,
                                            bulletsTexture.GetSize().y);
 
-  reloadBullet[0].loadFromFileWithPixelPadding( RESOURCES_PATH "bullets/reload/reloadBulletSprite1.png", 150, true);
+  reloadBullet[0].loadFromFileWithPixelPadding( RESOURCES_PATH "bullets/reload/reloadBulletSprite3.png", 150, true);
   reloadBullet[1].loadFromFileWithPixelPadding( RESOURCES_PATH "bullets/reload/reloadBulletSprite2.png", 150, true);
-  reloadBullet[2].loadFromFileWithPixelPadding( RESOURCES_PATH "bullets/reload/reloadBulletSprite3.png", 150, true);
+  reloadBullet[2].loadFromFileWithPixelPadding( RESOURCES_PATH "bullets/reload/reloadBulletSprite1.png", 150, true);
   reloadBulletAtlas[0] = gl2d::TextureAtlasPadding(20, 1, reloadBullet[0].GetSize().x,reloadBullet[0].GetSize().y);
   reloadBulletAtlas[1] = gl2d::TextureAtlasPadding(20, 1, reloadBullet[1].GetSize().x,reloadBullet[0].GetSize().y);
   reloadBulletAtlas[2] = gl2d::TextureAtlasPadding(20, 1, reloadBullet[2].GetSize().x,reloadBullet[0].GetSize().y);
