@@ -16,4 +16,6 @@ public:
 	float getDamage();
 	glm::vec2 getPos();
 	bool canLoadBullet();
+	void render(gl2d::Renderer2D& renderer, gl2d::Texture texture, gl2d::TextureAtlasPadding atlaspadding, int framex);
+
 };

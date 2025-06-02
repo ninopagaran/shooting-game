@@ -90,6 +90,7 @@ gl2d::Texture backgroundTexture[4];
 gl2d::Texture bulletsTexture;
 gl2d::TextureAtlasPadding bulletsAtlas;
 gl2d::Texture reloadBullet[3];
+gl2d::TextureAtlasPadding reloadBulletAtlas[3];
 gl2d::Texture healthBar;
 gl2d::Texture heartTex;
 gl2d::Texture health;
@@ -168,9 +169,12 @@ bool initGame() {
   bulletsAtlas = gl2d::TextureAtlasPadding(3, 2, bulletsTexture.GetSize().x,
                                            bulletsTexture.GetSize().y);
 
-  reloadBullet[0].loadFromFile(RESOURCES_PATH "bullets/reload/1.png", true);
-  reloadBullet[1].loadFromFile(RESOURCES_PATH "bullets/reload/2.png", true);
-  reloadBullet[2].loadFromFile(RESOURCES_PATH "bullets/reload/3.png", true);
+  reloadBullet[0].loadFromFileWithPixelPadding( RESOURCES_PATH "bullets/reload/reloadBulletSprite1.png", 150, true);
+  reloadBullet[1].loadFromFileWithPixelPadding( RESOURCES_PATH "bullets/reload/reloadBulletSprite2.png", 150, true);
+  reloadBullet[2].loadFromFileWithPixelPadding( RESOURCES_PATH "bullets/reload/reloadBulletSprite3.png", 150, true);
+  reloadBulletAtlas[0] = gl2d::TextureAtlasPadding(20, 1, reloadBullet[0].GetSize().x,reloadBullet[0].GetSize().y);
+  reloadBulletAtlas[1] = gl2d::TextureAtlasPadding(20, 1, reloadBullet[1].GetSize().x,reloadBullet[0].GetSize().y);
+  reloadBulletAtlas[2] = gl2d::TextureAtlasPadding(20, 1, reloadBullet[2].GetSize().x,reloadBullet[0].GetSize().y);
 
   tiledRenderer[0] = TiledRenderer(2000, backgroundTexture[0]);
   tiledRenderer[1] = TiledRenderer(2000, backgroundTexture[1]);
@@ -215,8 +219,8 @@ bool initGame() {
   menuBackground.loadFromFile(RESOURCES_PATH "backgroundScreen/newBg.png", true);
   gameoverTex.loadFromFile(RESOURCES_PATH "backgroundScreen/newBg.png", true);
 
-  runningTex.loadFromFileWithPixelPadding(RESOURCES_PATH "running.png", 200, true);
-  runningAtlas = gl2d::TextureAtlasPadding(10, 1, runningTex.GetSize().x,
+  runningTex.loadFromFileWithPixelPadding(RESOURCES_PATH "running.png", 150, true);
+  runningAtlas = gl2d::TextureAtlasPadding(20, 1, runningTex.GetSize().x,
                                              runningTex.GetSize().y);
 
   playBtn.texture = playButton;
@@ -274,7 +278,7 @@ void spawnEnemy() {
 
 void spawnLoads() {
 
-  if (data.loads.size() < 15 && data.jetLoad.size() < 20) {
+  if (data.loads.size() < 10 && data.jetLoad.size() < 10) {
     int typeBullet = rand() % 3;
     glm::vec2 offset(1500, 0);
     glm::vec2 offsetBullet = glm::vec2(
@@ -437,6 +441,9 @@ bool scoreReset = false;
 bool changeLevelByLife = false;
 int changeLevelByScore = 0;
 
+float frameBullentLatency = 0.0f;
+int framexBullet = 0;
+
 void gameplay(float deltaTime, int w, int h) {
 
 #pragma region movement on player
@@ -502,6 +509,16 @@ void gameplay(float deltaTime, int w, int h) {
 
   spawnLoads();
 
+
+  frameBullentLatency += 0.34f;
+  if (frameBullentLatency >= 1.0f) {
+    framexBullet++;
+    frameBullentLatency = 0.0f;
+  }
+  if(framexBullet >= 20) {
+    framexBullet = 0;
+  }
+
   for (int i = 0; i < data.loads.size(); i++) {
 
     if (glm::distance(data.playerPos, data.loads[i].getPos()) > 4000.f) {
@@ -511,8 +528,7 @@ void gameplay(float deltaTime, int w, int h) {
     }
     int type = data.loads[i].getType();
 
-    renderer.renderRectangle({data.loads[i].getPos(), 100.f, 100.f},
-                             reloadBullet[type], Colors_White, {}, {});
+    data.loads[i].render(renderer, reloadBullet[type], reloadBulletAtlas[type], framexBullet);
   }
 
   for (int i = 0; i < data.loads.size(); i++) {

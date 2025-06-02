@@ -45,3 +45,10 @@ bool LoadBullet::canLoadBullet() {
 	else
 		return false;
 }
+
+void LoadBullet::render(gl2d::Renderer2D& renderer, gl2d::Texture texture, gl2d::TextureAtlasPadding atlasPadding, int framex) {
+
+	float size = 150.f;
+	renderer.renderRectangle({position, size, size}, texture, Colors_White, glm::vec2(0.5f, 0.5f), 0, atlasPadding.get(framex, 0));
+
+}
