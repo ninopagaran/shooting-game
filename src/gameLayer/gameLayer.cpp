@@ -103,6 +103,7 @@ gl2d::Texture loadIcon;
 gl2d::Font font;
 Sound shootSound;
 Sound gameOverSound;
+Sound ingameSound;
 gl2d::Texture playButton;
 gl2d::TextureAtlasPadding playButtonAtlas;
 gl2d::Texture howButton;
@@ -204,6 +205,8 @@ bool initGame() {
   SetSoundVolume(shootSound, 0.1);
   gameOverSound = LoadSound(RESOURCES_PATH "target.ogg");
   SetSoundVolume(gameOverSound, 0.3);
+  ingameSound = LoadSound(RESOURCES_PATH "ingame.ogg");
+  SetSoundVolume(ingameSound, 0.5);
 
   font.createFromFile(RESOURCES_PATH "Minecraft.ttf");
 
@@ -249,6 +252,7 @@ bool initGame() {
 
 
 #pragma region spawn functions
+
 
 void spawnEnemy() {
 
@@ -470,36 +474,8 @@ int changeLevelByScore = 0;
 float frameBullentLatency = 0.0f;
 int framexBullet = 0;
 
+
 void gameplay(float deltaTime, int w, int h) {
-
-#pragma region level states
-
-  if (data.currentScore < 5 || (data.lives == 1 && !scoreReset))
-  {
-    currentLevel = EASY;
-	if (data.lives == 1 && !scoreReset) {
-		if (data.currentScore > data.highScore) {
-			data.highScore = data.currentScore;
-		}
-		data.currentScore = 0;
-        scoreReset = true;
-	}
-  }
-  else if (data.currentScore >= 5 && data.currentScore < 10)
-  {
-    currentLevel = MEDIUM;
-  }
-  else
-  {
-    currentLevel = HARD;
-  }
-
-  if (data.lives > 1) {
-      scoreReset = false;
-  }
-
-#pragma endregion
-
 
 #pragma region movement on player
 
@@ -679,11 +655,21 @@ void gameplay(float deltaTime, int w, int h) {
             // kill enemy
             #pragma region change level by score
 
+			      data.counter++;
             data.currentScore += 1;
-			data.counter++;
+            changeLevelByScore++;
+            if(changeLevelByScore < 5) {
+              currentLevel = EASY;
+            } else if (changeLevelByScore >= 5 && changeLevelByScore < 10) {
+              currentLevel = MEDIUM;
+            } else if (changeLevelByScore >= 10) {
+              currentLevel = HARD;
+            }
+            #pragma endregion
+
 			if (data.counter >= 10) {
 				data.counter = 0;
-				recoverHealth(); 
+				recoverHealth();
 			}
             std::cout << "Current Score: " << data.currentScore << std::endl;
             data.enemies.erase(data.enemies.begin() + e);
@@ -717,7 +703,34 @@ void gameplay(float deltaTime, int w, int h) {
   #pragma region change level by life
 
   if (data.health <= 0) {
-    data.lives--;
+     data.lives--;
+     switch(currentLevel) {
+      case EASY:
+        currentLevel = EASY;
+        break;
+      case MEDIUM:
+        currentLevel = EASY;
+        changeLevelByScore = 0;
+        break;
+      case HARD:
+        currentLevel = MEDIUM;
+        changeLevelByScore = 5;
+        break;
+      default:
+        currentLevel = EASY;
+        break;
+    }
+
+    if(data.lives == 1) {
+      currentLevel = EASY;
+      if(data.currentScore > data.highScore) {
+        data.highScore = data.currentScore;
+      }
+      data.currentScore = 0;
+      changeLevelByScore = 0;
+    }
+  #pragma endregion
+
     if (data.lives == 0) {
         // kill player
         PlaySound(gameOverSound);
