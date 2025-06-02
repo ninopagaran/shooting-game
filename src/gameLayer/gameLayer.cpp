@@ -66,7 +66,7 @@ public:
   std::vector<LoadBullet> loads;
   std::queue<LoadBullet> jetLoad;
 
-  float health = 3.0f;
+  float health = 1.0f;
   float spawnTimeEnemy = 3;
   float shootCooldown = 0.0f;
 
