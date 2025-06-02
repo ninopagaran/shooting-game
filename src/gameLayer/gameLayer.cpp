@@ -53,7 +53,7 @@ enum Level {
 
 #pragma region initial states
 
-Gamestate currentGameState = GAMEOVER;
+Gamestate currentGameState = MAIN_MENU;
 Level currentLevel = EASY;
 
 #pragma endregion
@@ -206,7 +206,9 @@ bool initGame() {
   gameOverSound = LoadSound(RESOURCES_PATH "target.ogg");
   SetSoundVolume(gameOverSound, 0.3);
   ingameSound = LoadSound(RESOURCES_PATH "ingame.ogg");
-  SetSoundVolume(ingameSound, 0.5);
+  SetSoundVolume(ingameSound, 0.1);
+
+  PlaySound(ingameSound);
 
   font.createFromFile(RESOURCES_PATH "Minecraft.ttf");
 
@@ -473,7 +475,6 @@ int changeLevelByScore = 0;
 
 float frameBullentLatency = 0.0f;
 int framexBullet = 0;
-
 
 void gameplay(float deltaTime, int w, int h) {
 
