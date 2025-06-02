@@ -461,14 +461,17 @@ void gameplay(float deltaTime, int w, int h) {
 
 #pragma region level states
 
+    static bool scoreReset = false;
+
   if (data.currentScore < 10 || data.lives == 1)
   {
     currentLevel = EASY;
-	if (data.lives == 1) {
+	if (data.lives == 1 && !scoreReset) {
 		if (data.currentScore > data.highScore) {
 			data.highScore = data.currentScore;
 		}
 		data.currentScore = 0;
+        scoreReset = true;
 	}
   }
   else if (data.currentScore >= 10 && data.currentScore < 20)
@@ -478,6 +481,10 @@ void gameplay(float deltaTime, int w, int h) {
   else
   {
     currentLevel = HARD;
+  }
+
+  if (data.lives > 1) {
+      scoreReset = false;
   }
 
 #pragma endregion
