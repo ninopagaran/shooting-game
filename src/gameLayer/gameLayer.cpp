@@ -434,36 +434,10 @@ void recoverHealth() {
 bool resetLevel = false;
 bool scoreReset = false;
 
+bool changeLevelByLife = false;
+int changeLevelByScore = 0;
+
 void gameplay(float deltaTime, int w, int h) {
-
-#pragma region level states
-
-  if (data.currentScore < 5 || (data.lives == 1 && !scoreReset))
-  {
-    currentLevel = EASY;
-	if (data.lives == 1 && !scoreReset) {
-		if (data.currentScore > data.highScore) {
-			data.highScore = data.currentScore;
-		}
-		data.currentScore = 0;
-        scoreReset = true;
-	}
-  }
-  else if (data.currentScore >= 5 && data.currentScore < 10)
-  {
-    currentLevel = MEDIUM;
-  }
-  else
-  {
-    currentLevel = HARD;
-  }
-
-  if (data.lives > 1) {
-      scoreReset = false;
-  }
-
-#pragma endregion
-
 
 #pragma region movement on player
 
@@ -594,11 +568,23 @@ void gameplay(float deltaTime, int w, int h) {
 
           if (data.enemies[e].getLife() <= 0) {
             // kill enemy
+            #pragma region change level by score
+
             data.currentScore += 1;
+            changeLevelByScore++;
+            if(changeLevelByScore < 5) {
+              currentLevel = EASY;
+            } else if (changeLevelByScore >= 5 && changeLevelByScore < 10) {
+              currentLevel = MEDIUM;
+            } else if (changeLevelByScore >= 10) {
+              currentLevel = HARD;
+            }
+            #pragma endregion
+
 			data.counter++;
 			if (data.counter >= 10) {
 				data.counter = 0;
-				recoverHealth(); 
+				recoverHealth();
 			}
             std::cout << "Current Score: " << data.currentScore << std::endl;
             data.enemies.erase(data.enemies.begin() + e);
@@ -627,15 +613,43 @@ void gameplay(float deltaTime, int w, int h) {
     data.bullets[i].update(deltaTime);
   }
 
+  #pragma region change level by life
+
   if (data.health <= 0) {
     data.lives--;
+    switch(currentLevel) {
+      case EASY:
+        currentLevel = EASY;
+        break;
+      case MEDIUM:
+        currentLevel = EASY;
+        changeLevelByScore = 0;
+        break;
+      case HARD:
+        currentLevel = MEDIUM;
+        changeLevelByScore = 5;
+        break;
+      default:
+        currentLevel = EASY;
+        break;
+    }
+
+    if(data.lives == 1) {
+      currentLevel = EASY;
+      if(data.currentScore > data.highScore) {
+        data.highScore = data.currentScore;
+      }
+      data.currentScore = 0;
+      changeLevelByScore = 0;
+    }
+  #pragma endregion
+
     if (data.lives == 0) {
         // kill player
         PlaySound(gameOverSound);
         currentGameState = GAMEOVER;
-    }
-    else {
-		data.health = 1.0f;
+    } else {
+      data.health = 1.0f;
     }
 
   }
@@ -817,14 +831,17 @@ void gameplay(float deltaTime, int w, int h) {
     }
 
 
-    //level section 
+    //level section
     renderer.renderText(glm::vec2{115, 231}, "EASY", font, currentLevel == "EASY" ? Colors_Black : Colors_White, (0.5F),
         (4.0F), (3.0F), true, { (0, 0), (0, 0), (0, 0), 0 });
 
     renderer.renderText(glm::vec2{ 260, 231 }, "MEDIUM", font, currentLevel == "MEDIUM" ? Colors_Black : Colors_White, (0.5F),
-        (4.0F), (3.0F), true, { (0, 0), (0, 0), (0, 0), 0 });   
+        (4.0F), (3.0F), true, { (0, 0), (0, 0), (0, 0), 0 });
 
     renderer.renderText(glm::vec2{ 420, 231 }, "HARD", font, currentLevel == "HARD" ? Colors_Black : Colors_White, (0.5F),
+        (4.0F), (3.0F), true, { (0, 0), (0, 0), (0, 0), 0 });
+
+    renderer.renderText(glm::vec2{ 500, 231 }, std::to_string(changeLevelByScore).c_str(), font, Colors_White, (0.5F),
         (4.0F), (3.0F), true, { (0, 0), (0, 0), (0, 0), 0 });
 
     glui::Box damageBox = glui::Box()
