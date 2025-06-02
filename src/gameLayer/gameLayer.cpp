@@ -801,17 +801,17 @@ void gameplay(float deltaTime, int w, int h) {
   std::string pointsToNextLevelStr;
   if (currentLevel == EASY) {
     int pointsNeeded = 5 - changeLevelByScore;
-    pointsToNextLevelStr = "Next Lvl: " + std::to_string(std::max(0, pointsNeeded));
+    pointsToNextLevelStr = "Point/s for Next Lvl: " + std::to_string(std::max(0, pointsNeeded));
   } else if (currentLevel == MEDIUM) {
     int pointsNeeded = 10 - changeLevelByScore;
-    pointsToNextLevelStr = "Next Lvl: " + std::to_string(std::max(0, pointsNeeded));
+    pointsToNextLevelStr = "Point/s for Next Lvl: " + std::to_string(std::max(0, pointsNeeded));
   } else { // HARD
     pointsToNextLevelStr = "Max Level";
   }
 
   // Calculate points to next heal
   int pointsToHeal = 10 - data.counter;
-  std::string pointsToNextHealStr = "Next Heal: " + std::to_string(pointsToHeal);
+  std::string pointsToNextHealStr = "Point/s for Next Heal: " + std::to_string(pointsToHeal);
 
 
  renderer.pushCamera();
@@ -928,12 +928,12 @@ void gameplay(float deltaTime, int w, int h) {
 
 
     // Add new indicators
-    float textYOffset = 231.0f + 30.0f; // Start Y position for new text
-    renderer.renderText(glm::vec2{115, textYOffset}, pointsToNextLevelStr.c_str(), font, Colors_White, (0.4F),
+    float textYOffset = 1000.0f + 30.0f; // Start Y position for new text
+    renderer.renderText(glm::vec2{188, textYOffset}, pointsToNextLevelStr.c_str(), font, Colors_White, (0.4F),
                         (3.0F), (2.0F), true);
 
-    textYOffset += 25.0f; // Increment Y for the next line
-    renderer.renderText(glm::vec2{115, textYOffset}, pointsToNextHealStr.c_str(), font, Colors_White, (0.4F),
+    textYOffset += 30.0f; // Increment Y for the next line
+    renderer.renderText(glm::vec2{200, textYOffset}, pointsToNextHealStr.c_str(), font, Colors_White, (0.4F),
                         (3.0F), (2.0F), true);
 
 
