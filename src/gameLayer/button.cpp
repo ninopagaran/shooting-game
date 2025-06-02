@@ -17,4 +17,5 @@ void Button::render(gl2d::Renderer2D& renderer ,glm::vec2 position, bool select)
     renderer.renderRectangle(
         {position - glm::vec2(buttonSize / 2, buttonSize / 2), buttonSize, buttonSize},
         texture, Colors_White, {}, 0, atlasPadding.get(selected ? 0 : 1, 0));
+
 }

@@ -27,9 +27,8 @@
 #include <enemy.h>
 #include <load.h>
 #include <tiledRenderer.h>
-
-//ui
 #include <button.h>
+#include <animate.h>
 
 #include <queue>
 #include <vector>
@@ -67,7 +66,7 @@ public:
   std::vector<LoadBullet> loads;
   std::queue<LoadBullet> jetLoad;
 
-  float health = 1.0f;
+  float health = 3.0f;
   float spawnTimeEnemy = 3;
   int points = 0;
   float shootCooldown = 0.0f;
@@ -83,46 +82,39 @@ GameData data;
 #pragma region object resources
 
 gl2d::Renderer2D renderer;
-
 gl2d::Texture jetBodyTexture;
 gl2d::TextureAtlasPadding jetAtlas;
-
 gl2d::Texture jetPlayerTexture;
 gl2d::Texture botTexture[4];
-
 TiledRenderer tiledRenderer[2];
 gl2d::Texture backgroundTexture[2];
-
 gl2d::Texture bulletsTexture;
 gl2d::TextureAtlasPadding bulletsAtlas;
-
 gl2d::Texture reloadBullet[3];
-
 gl2d::Texture healthBar;
 gl2d::Texture health;
 gl2d::Texture textBar;
 gl2d::Texture damageIcon[3];
 gl2d::Texture loadIcon;
-
 gl2d::Font font;
-
 Sound shootSound;
 Sound gameOverSound;
-
 gl2d::Texture playButton;
 gl2d::TextureAtlasPadding playButtonAtlas;
-
 gl2d::Texture howButton;
 gl2d::TextureAtlasPadding howButtonAtlas;
-
 gl2d::Texture creditsButton;
 gl2d::TextureAtlasPadding creditsButtonAtlas;
-
 gl2d::Texture howToPlayTex;
 gl2d::Texture creditsTex;
-
 gl2d::Texture menuBackground;
 gl2d::Texture gameoverTex;
+
+
+gl2d::Texture runningTex;
+gl2d::TextureAtlasPadding runningAtlas;
+
+myAnimate runningAnim;
 
 Button playBtn;
 Button howBtn;
@@ -214,6 +206,9 @@ bool initGame() {
   menuBackground.loadFromFile(RESOURCES_PATH "ciriablast2.png", true);
   gameoverTex.loadFromFile(RESOURCES_PATH "gameoverr.png", true);
 
+  runningTex.loadFromFileWithPixelPadding(RESOURCES_PATH "running.png", 200, true);
+  runningAtlas = gl2d::TextureAtlasPadding(10, 1, runningTex.GetSize().x,
+                                             runningTex.GetSize().y);
 
   playBtn.texture = playButton;
   playBtn.atlasPadding = playButtonAtlas;
@@ -221,6 +216,8 @@ bool initGame() {
   howBtn.atlasPadding = howButtonAtlas;
   creditsBtn.texture = creditsButton;
   creditsBtn.atlasPadding = creditsButtonAtlas;
+
+  runningAnim = myAnimate(200, runningTex, runningAtlas);
 
   restartGame();
 
@@ -310,23 +307,18 @@ std::string strDamage(int type) {
 }
 
 const float jetSize = 180.f;
-
 const float buttonSize = 250.f;
 int presentButton = 0;
 
 #pragma region menu functions
 
-
+int frame = 0;
+float latency = 0.0f;
 
 void menu(int w, int h) {
 
   int maxButtons = 3;
   glm::vec2 playButtonPos = {985, 500};
-
-  for (int i = 0; i < 2; i++)
-    tiledRenderer[i].render(renderer);
-
-  renderer.renderRectangle({glm::vec2{0, 0}, w,h,},menuBackground);
 
   if (platform::isButtonReleased(platform::Button::Up)) {
     if (presentButton == 0)
@@ -343,6 +335,20 @@ void menu(int w, int h) {
   playBtn.render(renderer, playButtonPos, presentButton == 0);
   creditsBtn.render(renderer, playButtonPos + glm::vec2{0, 200}, presentButton == 1);
   howBtn.render(renderer, playButtonPos + glm::vec2{0, 400}, presentButton == 2);
+
+
+  if(frame == 9){
+    frame = 0;
+  }
+  latency += 0.25f;
+  if (latency >= 1.0f) {
+      frame++;
+      latency = 0.0f;
+  }
+
+
+  runningAnim.render(renderer, playButtonPos - glm::vec2{0, 200}, frame, 0);
+
 
   if(platform::isButtonReleased(platform::Button::Enter))
   switch (presentButton) {
@@ -802,7 +808,7 @@ bool gameLogic(float deltaTime) {
   renderer.flush();
   // ImGui::ShowDemoWindow();
 
-  /*ImGui::Begin("debug");
+  ImGui::Begin("debug");
   ImGui::Text("Bullets 1 count: %d", (int)data.bullets.size());
   ImGui::Text("Enemies count: %d", (int)data.enemies.size());
   ImGui::Text("Points : %d", (int)data.points);
@@ -818,7 +824,7 @@ bool gameLogic(float deltaTime) {
   }
 
   ImGui::SliderFloat("Player Health", &data.health, 0, 1);
-  ImGui::End();*/
+  ImGui::End();
 
   return true;
 }
