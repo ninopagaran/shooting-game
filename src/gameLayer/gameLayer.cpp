@@ -68,13 +68,12 @@ public:
 
   float health = 3.0f;
   float spawnTimeEnemy = 3;
-  int points = 0;
   float shootCooldown = 0.0f;
 
   int currentScore = 0;
   int highScore = 0;
   int lives = 3;
-
+  int counter = 0;
 };
 
 GameData data;
@@ -92,6 +91,7 @@ gl2d::Texture bulletsTexture;
 gl2d::TextureAtlasPadding bulletsAtlas;
 gl2d::Texture reloadBullet[3];
 gl2d::Texture healthBar;
+gl2d::Texture heartTex;
 gl2d::Texture health;
 gl2d::Texture textBar;
 gl2d::Texture damageIcon[3];
@@ -171,6 +171,7 @@ bool initGame() {
   tiledRenderer[1] = TiledRenderer(5000, backgroundTexture[1]);
 
   healthBar.loadFromFile(RESOURCES_PATH "healthBar.png", true);
+  heartTex.loadFromFile(RESOURCES_PATH "heart1.png", true);
   health.loadFromFile(RESOURCES_PATH "health.png", true);
 
   textBar.loadFromFile(RESOURCES_PATH "textbar.png", true);
@@ -416,21 +417,49 @@ void gameover(int w, int h, int points) {
   }
 }
 
+void recoverHealth() {
+    data.health += 0.5f;
+
+    if (data.health > 1.0f && data.lives < 3) {
+        data.lives++;
+        data.health -= 1.0f;
+    }
+
+	if (data.lives >= 3) {
+		data.lives = 3;
+		data.health = std::min(data.health, 1.0f);
+	}
+}
+
+
 void gameplay(float deltaTime, int w, int h) {
 
 #pragma region level states
 
-  if (data.currentScore < 10)
+    static bool scoreReset = false;
+
+  if (data.currentScore < 10 || data.lives == 1)
   {
     currentLevel = EASY;
+	if (data.lives == 1 && !scoreReset) {
+		if (data.currentScore > data.highScore) {
+			data.highScore = data.currentScore;
+		}
+		data.currentScore = 0;
+        scoreReset = true;
+	}
   }
-  else if (data.currentScore >= 10 && data.currentScore < 30)
+  else if (data.currentScore >= 10 && data.currentScore < 20)
   {
     currentLevel = MEDIUM;
   }
   else
   {
     currentLevel = HARD;
+  }
+
+  if (data.lives > 1) {
+      scoreReset = false;
   }
 
 #pragma endregion
@@ -566,8 +595,12 @@ void gameplay(float deltaTime, int w, int h) {
           if (data.enemies[e].getLife() <= 0) {
             // kill enemy
             data.currentScore += 1;
+			data.counter++;
+			if (data.counter >= 10) {
+				data.counter = 0;
+				recoverHealth(); 
+			}
             std::cout << "Current Score: " << data.currentScore << std::endl;
-            data.points += (data.enemies[e].getType() + 1);
             data.enemies.erase(data.enemies.begin() + e);
           }
           // std::cout << data.bullets[i].getDamage() << std::endl;
@@ -595,12 +628,16 @@ void gameplay(float deltaTime, int w, int h) {
   }
 
   if (data.health <= 0) {
-    // kill player
-    PlaySound(gameOverSound);
-    currentGameState = GAMEOVER;
-  } else {
-    data.health += deltaTime * 0.05;
-    data.health = glm::clamp(data.health, 0.f, 1.f);
+    data.lives--;
+    if (data.lives == 0) {
+        // kill player
+        PlaySound(gameOverSound);
+        currentGameState = GAMEOVER;
+    }
+    else {
+		data.health = 1.0f;
+    }
+
   }
 
 #pragma endregion
@@ -676,6 +713,7 @@ void gameplay(float deltaTime, int w, int h) {
   std::string remLoad = std::to_string(data.jetLoad.size());
   std::string currentLevel = level();
   std::string currentPoints = std::to_string(data.currentScore);
+  std::string highScoreStr = std::to_string(data.highScore);
 
   renderer.pushCamera();
   {
@@ -689,9 +727,25 @@ void gameplay(float deltaTime, int w, int h) {
                               .yAspectRatio(1.f / 8.f);
 
     renderer.renderRectangle(healthBox, healthBar);
-
     glm::vec4 newRect = healthBox();
     newRect.z *= data.health;
+
+
+    const float heartSize = 60.0f;
+    const float heartSpacing = 70.0f;
+    const float yOffset = 10.0f; 
+
+
+    glm::vec2 heartBasePos = {newRect.x, newRect.y + newRect.w + yOffset};
+
+    for (int i = 0; i < data.lives; i++) {
+        renderer.renderRectangle(
+            {heartBasePos + glm::vec2(i * heartSpacing, 0), heartSize, heartSize},
+            heartTex, Colors_White
+        );
+    }
+
+	const float belowHeartsY = heartBasePos.y + heartSize + 15.0f;
 
     glm::vec4 textCoords = {0, 1, 1, 0};
     textCoords.z *= data.health;
@@ -699,6 +753,7 @@ void gameplay(float deltaTime, int w, int h) {
     renderer.renderRectangle(newRect, health, Colors_White, {}, {}, textCoords);
 
     const char *points = currentPoints.c_str();
+    const char *hScore = highScoreStr.c_str();
     const char *myLevel = currentLevel.c_str();
     const char *load = remLoad.c_str();
     const char *damage = d.c_str();
@@ -716,21 +771,33 @@ void gameplay(float deltaTime, int w, int h) {
     renderer.renderText(glm::vec2{460, 77}, myLevel, font, Colors_White, (0.6F),
                         (4.0F), (3.0F), true);
 
+    glui::Box highScoreBox = glui::Box()
+                            .xLeftPerc(0.35)
+                            .yTopPerc(0.01)
+                            .xDimensionPercentage(0.15)
+                            .yAspectRatio(1.f / 1.8f);
+
+    renderer.renderRectangle(highScoreBox, textBar);
+    renderer.renderText(glm::vec2{ 820, 79 }, "High Score", font, Colors_White, (0.5F),
+        (4.0F), (3.0F), true, { (0, 1), (0, 1), (0, 1), 0 });
+    renderer.renderText(glm::vec2{ 1045, 74 }, hScore, font, Colors_White, (0.6F),
+        (4.0F), (3.0F), true);
+
     glui::Box scoreBox = glui::Box()
                              .xLeftPerc(0.35)
-                             .yTopPerc(0.01)
+                             .yTopPerc(0.08)
                              .xDimensionPercentage(0.15)
                              .yAspectRatio(1.f / 1.8f);
 
     renderer.renderRectangle(scoreBox, textBar);
-    renderer.renderText(glm::vec2{820, 79}, "Score", font, Colors_White, (0.5F),
+    renderer.renderText(glm::vec2{820, 149}, "Score", font, Colors_White, (0.5F),
                         (4.0F), (3.0F), true, {(0, 1), (0, 1), (0, 1), 0});
-    renderer.renderText(glm::vec2{1045, 74}, points, font, Colors_White, (0.6F),
+    renderer.renderText(glm::vec2{1045, 144}, points, font, Colors_White, (0.6F),
                         (4.0F), (3.0F), true);
 
     glui::Box damageBox = glui::Box()
-                              .xLeftPerc(0.652)
-                              .yTopPerc(0.107)
+                              .xLeftPerc(0.75)
+                              .yTopPerc(0.17)
                               .xDimensionPercentage(0.03)
                               .yAspectRatio(0.7);
 
@@ -741,20 +808,20 @@ void gameplay(float deltaTime, int w, int h) {
     else
       renderer.renderRectangle(damageBox, damageIcon[0]);
 
-    renderer.renderText(glm::vec2{1383, 120}, "Damage: ", font, Colors_White,
+    renderer.renderText(glm::vec2{1700, belowHeartsY + 10}, "Damage: ", font, Colors_White,
                         (0.5F), (4.0F), (3.0F), true);
-    renderer.renderText(glm::vec2{1480, 117}, damage, font, Colors_White,
+    renderer.renderText(glm::vec2{1790, belowHeartsY + 4}, damage, font, Colors_White,
                         (0.5F), (4.0F), (3.0F), true);
 
     glui::Box loadBox = glui::Box()
-                            .xLeftPerc(0.85)
-                            .yTopPerc(0.11)
+                            .xLeftPerc(0.78)
+                            .yTopPerc(0.12)
                             .xDimensionPercentage(0.023)
                             .yAspectRatio(1);
     renderer.renderRectangle(loadBox, loadIcon);
-    renderer.renderText(glm::vec2{1725, 120}, "Load: ", font, Colors_White,
+    renderer.renderText(glm::vec2{1725, heartBasePos.y + 5}, "Load: ", font, Colors_White,
                         (0.5F), (4.0F), (3.0F), true);
-    renderer.renderText(glm::vec2{1790, 115}, load, font, Colors_White, (0.5F),
+    renderer.renderText(glm::vec2{1790, heartBasePos.y + 5}, load, font, Colors_White, (0.5F),
                         (4.0F), (3.0F), true);
   }
   renderer.popCamera();
@@ -798,7 +865,7 @@ bool gameLogic(float deltaTime) {
       break;
     case GAMEOVER:
       renderer.pushCamera();
-      gameover(w, h, data.points);
+      gameover(w, h, data.highScore);
       renderer.popCamera();
       break;
     default:
