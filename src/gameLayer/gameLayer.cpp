@@ -64,13 +64,14 @@ public:
   std::vector<LoadBullet> loads;
   std::queue<LoadBullet> jetLoad;
 
-  float health = 3.0f;
+  float health = 1.0f;
   float spawnTimeEnemy = 3;
   float shootCooldown = 0.0f;
 
   int currentScore = 0;
   int highScore = 0;
   int lives = 3;
+  int counter = 0;
 };
 
 GameData data;
@@ -94,6 +95,7 @@ gl2d::TextureAtlasPadding bulletsAtlas;
 gl2d::Texture reloadBullet[3];
 
 gl2d::Texture healthBar;
+gl2d::Texture heartTex;
 gl2d::Texture health;
 gl2d::Texture textBar;
 gl2d::Texture damageIcon[3];
@@ -170,6 +172,7 @@ bool initGame() {
   tiledRenderer[1] = TiledRenderer(5000, backgroundTexture[1]);
 
   healthBar.loadFromFile(RESOURCES_PATH "healthBar.png", true);
+  heartTex.loadFromFile(RESOURCES_PATH "heart1.png", true);
   health.loadFromFile(RESOURCES_PATH "health.png", true);
 
   textBar.loadFromFile(RESOURCES_PATH "textbar.png", true);
@@ -439,6 +442,21 @@ void gameover(int w, int h, int points) {
   }
 }
 
+void recoverHealth() {
+    data.health += 0.5f;
+
+    if (data.health > 1.0f && data.lives < 3) {
+        data.lives++;
+        data.health -= 1.0f;
+    }
+
+	if (data.lives >= 3) {
+		data.lives = 3;
+		data.health = std::min(data.health, 1.0f);
+	}
+}
+
+
 void gameplay(float deltaTime, int w, int h) {
 
 #pragma region level states
@@ -595,6 +613,11 @@ void gameplay(float deltaTime, int w, int h) {
           if (data.enemies[e].getLife() <= 0) {
             // kill enemy
             data.currentScore += 1;
+			data.counter++;
+			if (data.counter >= 10) {
+				data.counter = 0;
+				recoverHealth(); 
+			}
             std::cout << "Current Score: " << data.currentScore << std::endl;
             data.enemies.erase(data.enemies.begin() + e);
           }
@@ -621,12 +644,18 @@ void gameplay(float deltaTime, int w, int h) {
 
     data.bullets[i].update(deltaTime);
   }
-  std::cout << "health: " << data.health << std::endl;
+
   if (data.health <= 0) {
-    // kill player
-    PlaySound(gameOverSound);
-    currentGameState = GAMEOVER;
-      
+    data.lives--;
+    if (data.lives == 0) {
+        // kill player
+        PlaySound(gameOverSound);
+        currentGameState = GAMEOVER;
+    }
+    else {
+		data.health = 1.0f;
+    }
+
   }
 
 #pragma endregion
@@ -715,9 +744,25 @@ void gameplay(float deltaTime, int w, int h) {
                               .yAspectRatio(1.f / 8.f);
 
     renderer.renderRectangle(healthBox, healthBar);
-
     glm::vec4 newRect = healthBox();
     newRect.z *= data.health;
+
+
+    const float heartSize = 40.0f;
+    const float heartSpacing = 45.0f;
+    const float yOffset = 10.0f; 
+
+
+    glm::vec2 heartBasePos = {newRect.x, newRect.y + newRect.w + yOffset};
+
+    for (int i = 0; i < data.lives; i++) {
+        renderer.renderRectangle(
+            {heartBasePos + glm::vec2(i * heartSpacing, 0), heartSize, heartSize},
+            heartTex, Colors_White
+        );
+    }
+
+	const float belowHeartsY = heartBasePos.y + heartSize + 15.0f;
 
     glm::vec4 textCoords = {0, 1, 1, 0};
     textCoords.z *= data.health;
@@ -756,7 +801,7 @@ void gameplay(float deltaTime, int w, int h) {
 
     glui::Box damageBox = glui::Box()
                               .xLeftPerc(0.652)
-                              .yTopPerc(0.107)
+                              .yTopPerc(0.18)
                               .xDimensionPercentage(0.03)
                               .yAspectRatio(0.7);
 
@@ -767,20 +812,20 @@ void gameplay(float deltaTime, int w, int h) {
     else
       renderer.renderRectangle(damageBox, damageIcon[0]);
 
-    renderer.renderText(glm::vec2{1383, 120}, "Damage: ", font, Colors_White,
+    renderer.renderText(glm::vec2{1383, belowHeartsY + 10}, "Damage: ", font, Colors_White,
                         (0.5F), (4.0F), (3.0F), true);
-    renderer.renderText(glm::vec2{1480, 117}, damage, font, Colors_White,
+    renderer.renderText(glm::vec2{1480, belowHeartsY + 7}, damage, font, Colors_White,
                         (0.5F), (4.0F), (3.0F), true);
 
     glui::Box loadBox = glui::Box()
                             .xLeftPerc(0.85)
-                            .yTopPerc(0.11)
+                            .yTopPerc(0.18)
                             .xDimensionPercentage(0.023)
                             .yAspectRatio(1);
     renderer.renderRectangle(loadBox, loadIcon);
-    renderer.renderText(glm::vec2{1725, 120}, "Load: ", font, Colors_White,
+    renderer.renderText(glm::vec2{1725, belowHeartsY + 10}, "Load: ", font, Colors_White,
                         (0.5F), (4.0F), (3.0F), true);
-    renderer.renderText(glm::vec2{1790, 115}, load, font, Colors_White, (0.5F),
+    renderer.renderText(glm::vec2{1790, belowHeartsY + 7}, load, font, Colors_White, (0.5F),
                         (4.0F), (3.0F), true);
   }
   renderer.popCamera();
