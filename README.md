@@ -4,7 +4,7 @@ Welcome to the **Ciria's State**!
 
 ## Watch the Demo Video
 
-[![Watch the video](https://img.youtube.com/vi/_6wVKxpgmIQ/0.jpg)](https://www.youtube.com/watch?v=_6wVKxpgmIQ)
+[![Watch the video](https://img.youtube.com/vi/FCqdV1rjrCc/0.jpg)](https://www.youtube.com/watch?v=FCqdV1rjrCc)
 
 ## Developers:
   ### Kassy M. Mondido
