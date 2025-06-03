@@ -27,9 +27,36 @@
 #include <enemy.h>
 #include <load.h>
 #include <tiledRenderer.h>
+#include <button.h>
+#include <animate.h>
 
 #include <queue>
 #include <vector>
+
+#pragma region states
+
+enum Gamestate {
+  MAIN_MENU,
+  IN_GAME,
+  HOW_TO_PLAY,
+  CREDITS,
+  GAMEOVER
+};
+
+enum Level {
+  EASY,
+  MEDIUM,
+  HARD
+};
+
+#pragma endregion
+
+#pragma region initial states
+
+Gamestate currentGameState = MAIN_MENU;
+Level currentLevel = EASY;
+
+#pragma endregion
 
 class GameData {
 public:
@@ -37,60 +64,72 @@ public:
   std::vector<Bullets> bullets;
   std::vector<Enemy> enemies;
   std::vector<LoadBullet> loads;
-
   std::queue<LoadBullet> jetLoad;
+  std::vector<glm::vec2> healPowerUpPositions; 
 
   float health = 1.0f;
   float spawnTimeEnemy = 3;
-  int points = 0;
-
   float shootCooldown = 0.0f;
+  float spawnTimeHealPowerUp = 10.0f;
+
+
+  int currentScore = 0;
+  int highScore = 0;
+  int lives = 3;
+  int counter = 0;
 };
 
 GameData data;
 
-gl2d::Renderer2D renderer;
+#pragma region object resources
 
+gl2d::Renderer2D renderer;
 gl2d::Texture jetBodyTexture;
 gl2d::TextureAtlasPadding jetAtlas;
-
 gl2d::Texture jetPlayerTexture;
 gl2d::Texture botTexture[4];
-
-TiledRenderer tiledRenderer[2];
-gl2d::Texture backgroundTexture[2];
-
+TiledRenderer tiledRenderer[4];
+gl2d::Texture backgroundTexture[4];
 gl2d::Texture bulletsTexture;
 gl2d::TextureAtlasPadding bulletsAtlas;
-
 gl2d::Texture reloadBullet[3];
-
+gl2d::TextureAtlasPadding reloadBulletAtlas[3];
 gl2d::Texture healthBar;
+gl2d::Texture heartTex;
 gl2d::Texture health;
 gl2d::Texture textBar;
 gl2d::Texture damageIcon[3];
 gl2d::Texture loadIcon;
-
 gl2d::Font font;
-
 Sound shootSound;
 Sound gameOverSound;
-
-// menu
+Sound ingameSound;
 gl2d::Texture playButton;
 gl2d::TextureAtlasPadding playButtonAtlas;
-
 gl2d::Texture howButton;
 gl2d::TextureAtlasPadding howButtonAtlas;
-
 gl2d::Texture creditsButton;
 gl2d::TextureAtlasPadding creditsButtonAtlas;
-
 gl2d::Texture howToPlayTex;
 gl2d::Texture creditsTex;
-
 gl2d::Texture menuBackground;
 gl2d::Texture gameoverTex;
+gl2d::Texture healPowerUpTexture;
+gl2d::TextureAtlasPadding healPowerUpTextureAtlas;
+
+gl2d::Texture runningTex;
+gl2d::TextureAtlasPadding runningAtlas;
+
+
+myAnimate runningAnim;
+
+Button playBtn;
+Button howBtn;
+Button creditsBtn;
+
+#pragma endregion
+
+#pragma region intersect restart
 
 bool intersectBullet(glm::vec2 bulletPos, glm::vec2 shipPos, float shipSize) {
   return glm::distance(bulletPos, shipPos) <= shipSize;
@@ -101,6 +140,10 @@ void restartGame() {
   renderer.currentCamera.follow(data.playerPos, 550, 0, 0, renderer.windowW,
                                 renderer.windowH);
 }
+
+#pragma endregion
+
+#pragma region load resources init
 
 bool initGame() {
   // game
@@ -117,24 +160,39 @@ bool initGame() {
   botTexture[3].loadFromFile(RESOURCES_PATH "jets/4.png", true);
 
   // background
-  backgroundTexture[0].loadFromFile(RESOURCES_PATH "background/sky_bg2.jpg",
+  backgroundTexture[1].loadFromFile(RESOURCES_PATH "background/bg_stars.png",
+      true);
+  backgroundTexture[0].loadFromFile(RESOURCES_PATH "background/bg_purple_night.png",
                                     true);
-  backgroundTexture[1].loadFromFile(RESOURCES_PATH "background/clouds_bg2.png",
+  backgroundTexture[2].loadFromFile(RESOURCES_PATH "background/bg_cloud.png",
                                     true);
+  //backgroundTexture[3].loadFromFile(RESOURCES_PATH "background/bg_moon.png",
+  //                                  true);
 
   bulletsTexture.loadFromFileWithPixelPadding(
       RESOURCES_PATH "spaceShip/stitchedFiles/projectiles.png", 500, true);
   bulletsAtlas = gl2d::TextureAtlasPadding(3, 2, bulletsTexture.GetSize().x,
                                            bulletsTexture.GetSize().y);
 
-  reloadBullet[0].loadFromFile(RESOURCES_PATH "bullets/reload/1.png", true);
-  reloadBullet[1].loadFromFile(RESOURCES_PATH "bullets/reload/2.png", true);
-  reloadBullet[2].loadFromFile(RESOURCES_PATH "bullets/reload/3.png", true);
+  reloadBullet[0].loadFromFileWithPixelPadding( RESOURCES_PATH "bullets/reload/reloadBulletSprite3.png", 150, true);
+  reloadBullet[1].loadFromFileWithPixelPadding( RESOURCES_PATH "bullets/reload/reloadBulletSprite2.png", 150, true);
+  reloadBullet[2].loadFromFileWithPixelPadding( RESOURCES_PATH "bullets/reload/reloadBulletSprite1.png", 150, true);
+  reloadBulletAtlas[0] = gl2d::TextureAtlasPadding(20, 1, reloadBullet[0].GetSize().x,reloadBullet[0].GetSize().y);
+  reloadBulletAtlas[1] = gl2d::TextureAtlasPadding(20, 1, reloadBullet[1].GetSize().x,reloadBullet[0].GetSize().y);
+  reloadBulletAtlas[2] = gl2d::TextureAtlasPadding(20, 1, reloadBullet[2].GetSize().x,reloadBullet[0].GetSize().y);
 
-  tiledRenderer[0] = TiledRenderer(5000, backgroundTexture[0]);
-  tiledRenderer[1] = TiledRenderer(5000, backgroundTexture[1]);
+  healPowerUpTexture.loadFromFileWithPixelPadding(RESOURCES_PATH "HEAL.png", 150, true);
+  healPowerUpTextureAtlas = gl2d::TextureAtlasPadding(20, 1, healPowerUpTexture.GetSize().x,
+      healPowerUpTexture.GetSize().y);
+
+  tiledRenderer[0] = TiledRenderer(2000, backgroundTexture[0]);
+  tiledRenderer[1] = TiledRenderer(2000, backgroundTexture[1]);
+  tiledRenderer[2] = TiledRenderer(2000, backgroundTexture[2]);
+  //tiledRenderer[3] = TiledRenderer(2000, backgroundTexture[3]);
+
 
   healthBar.loadFromFile(RESOURCES_PATH "healthBar.png", true);
+  heartTex.loadFromFile(RESOURCES_PATH "heart1.png", true);
   health.loadFromFile(RESOURCES_PATH "health.png", true);
 
   textBar.loadFromFile(RESOURCES_PATH "textbar.png", true);
@@ -147,6 +205,10 @@ bool initGame() {
   SetSoundVolume(shootSound, 0.1);
   gameOverSound = LoadSound(RESOURCES_PATH "target.ogg");
   SetSoundVolume(gameOverSound, 0.3);
+  ingameSound = LoadSound(RESOURCES_PATH "ingame.ogg");
+  SetSoundVolume(ingameSound, 0.1);
+
+  PlaySound(ingameSound);
 
   font.createFromFile(RESOURCES_PATH "Minecraft.ttf");
 
@@ -165,27 +227,52 @@ bool initGame() {
       2, 1, bulletsTexture.GetSize().x, bulletsTexture.GetSize().y);
 
   howToPlayTex.loadFromFile(RESOURCES_PATH "howToPlay.png", true);
-  creditsTex.loadFromFile(RESOURCES_PATH "credits_fn.png", true);
+  creditsTex.loadFromFile(RESOURCES_PATH "GameCredits.png", true);
 
-  menuBackground.loadFromFile(RESOURCES_PATH "ciriablast2.png", true);
-  gameoverTex.loadFromFile(RESOURCES_PATH "gameoverr.png", true);
+  menuBackground.loadFromFile(RESOURCES_PATH "backgroundScreen/newBg.png", true);
+  gameoverTex.loadFromFile(RESOURCES_PATH "backgroundScreen/newBg.png", true);
+
+  runningTex.loadFromFileWithPixelPadding(RESOURCES_PATH "running.png", 150, true);
+  runningAtlas = gl2d::TextureAtlasPadding(20, 1, runningTex.GetSize().x,
+                                             runningTex.GetSize().y);
+
+  playBtn.texture = playButton;
+  playBtn.atlasPadding = playButtonAtlas;
+  howBtn.texture = howButton;
+  howBtn.atlasPadding = howButtonAtlas;
+  creditsBtn.texture = creditsButton;
+  creditsBtn.atlasPadding = creditsButtonAtlas;
+
+  runningAnim = myAnimate(200, runningTex, runningAtlas);
+
   restartGame();
 
   return true;
 }
 
-void spawnEnemy() {
-  int type;
-  if (data.points < 10)
-    type = 0;
-  else if (data.points >= 10 && data.points < 30)
-    type = rand() % 2;
-  else if (data.points >= 30 && data.points < 60)
-    type = rand() % 3;
-  else
-    type = rand() % 4;
+#pragma endregion
 
-  std::cout << type << std::endl;
+
+#pragma region spawn functions
+
+
+void spawnEnemy() {
+
+  int type;
+  switch(currentLevel) {
+    case EASY:
+      type = 0;
+      break;
+    case MEDIUM:
+      type = rand() % 3;
+      break;
+    case HARD:
+      type = rand() % 4;
+      break;
+    default:
+      type = rand() % 2;
+      break;
+  }
 
   glm::vec2 offset(2000, 0);
   offset =
@@ -205,9 +292,8 @@ void spawnEnemy() {
 
 void spawnLoads() {
 
-  if (data.loads.size() < 15 && data.jetLoad.size() < 20) {
+  if (data.loads.size() < 10 && data.jetLoad.size() < 10) {
     int typeBullet = rand() % 3;
-    std::cout << typeBullet << std::endl;
     glm::vec2 offset(1500, 0);
     glm::vec2 offsetBullet = glm::vec2(
         glm::vec4(offset, 0, 1) *
@@ -222,13 +308,34 @@ void spawnLoads() {
   }
 }
 
-std::string level(int points) {
-  if (points < 10)
-    return "Beginner";
-  else if (points >= 10 && points < 60)
-    return "Average";
-  else
-    return "Master";
+void spawnHealPowerUp() {
+
+  if (data.healPowerUpPositions.size() < 20 && (data.lives < 3 || (data.lives == 3 && data.health < 1.0f))) {
+    glm::vec2 offset(1500, 0);
+    glm::vec2 offsetPowerUp = glm::vec2(
+        glm::vec4(offset, 0, 1) *
+        glm::rotate(glm::mat4(1.f), glm::radians((float)(rand() % 360)),
+                    glm::vec3(0, 0, 1)));
+    glm::vec2 posPowerUp = data.playerPos + offsetPowerUp;
+
+    data.healPowerUpPositions.push_back(posPowerUp);
+  }
+}
+
+#pragma endregion
+
+std::string level() {
+  switch (currentLevel) {
+    case EASY:
+      return "EASY";
+    case MEDIUM:
+      return "MEDIUM";
+    case HARD:
+      return "HARD";
+    default:
+      return "HACKER";
+  }
+
 }
 
 std::string strDamage(int type) {
@@ -239,28 +346,20 @@ std::string strDamage(int type) {
   else
     return "20";
 }
-const float jetSize = 180.f;
 
-int whatYouDoin = 0;
+const float jetSize = 180.f;
 const float buttonSize = 250.f;
 int presentButton = 0;
 
+#pragma region menu functions
+
+int frame = 0;
+float latency = 0.0f;
+
 void menu(int w, int h) {
 
-  for (int i = 0; i < 2; i++)
-    tiledRenderer[i].render(renderer);
-
-  renderer.renderRectangle(
-      {
-          glm::vec2{0, 0},
-          w,
-          h,
-      },
-      menuBackground);
-
-  glm::vec2 playButtonPos = {985, 500};
-
   int maxButtons = 3;
+  glm::vec2 playButtonPos = {985, 500};
 
   if (platform::isButtonReleased(platform::Button::Up)) {
     if (presentButton == 0)
@@ -273,116 +372,109 @@ void menu(int w, int h) {
     else
       presentButton += 1;
   }
+  renderFullScreen(renderer, menuBackground, w, h);
+  renderer.renderText(glm::vec2{850, 300}, "Ciria's State", font, Colors_White, (1.5F),
+                        (4.0F), (3.0F), true);
 
-  if (presentButton == 0) {
-    renderer.renderRectangle(
-        {playButtonPos - glm::vec2(buttonSize / 2, buttonSize / 2), buttonSize,
-         buttonSize},
-        playButton, Colors_White, {}, 0, playButtonAtlas.get(0, 0));
-    if (platform::isButtonReleased(platform::Button::Enter))
-      whatYouDoin = 1;
-  } else
-    renderer.renderRectangle(
-        {playButtonPos - glm::vec2(buttonSize / 2, buttonSize / 2), buttonSize,
-         buttonSize},
-        playButton, Colors_White, {}, 0, playButtonAtlas.get(1, 0));
+	renderer.renderRectangle({ glm::vec2{1300, 300} - glm::vec2(200.0f / 2, 200.f / 2)
+	, 200,200 }, jetPlayerTexture,
+		Colors_White, {}, 20.0f);
+  playBtn.render(renderer, playButtonPos, presentButton == 0);
+  howBtn.render(renderer, playButtonPos + glm::vec2{0, 200}, presentButton == 1);
+  creditsBtn.render(renderer, playButtonPos + glm::vec2{0, 400}, presentButton == 2);
 
-  if (presentButton == 1) {
-    renderer.renderRectangle({playButtonPos + glm::vec2{0, 200} -
-                                  glm::vec2(buttonSize / 2, buttonSize / 2),
-                              buttonSize, buttonSize},
-                             howButton, Colors_White, {}, 0,
-                             playButtonAtlas.get(0, 0));
-    if (platform::isButtonReleased(platform::Button::Enter))
-      whatYouDoin = 2;
-  } else
-    renderer.renderRectangle({playButtonPos + glm::vec2{0, 200} -
-                                  glm::vec2(buttonSize / 2, buttonSize / 2),
-                              buttonSize, buttonSize},
-                             howButton, Colors_White, {}, 0,
-                             playButtonAtlas.get(1, 0));
 
-  if (presentButton == 2) {
-    renderer.renderRectangle({playButtonPos + glm::vec2{0, 400} -
-                                  glm::vec2(buttonSize / 2, buttonSize / 2),
-                              buttonSize, buttonSize},
-                             creditsButton, Colors_White, {}, 0,
-                             playButtonAtlas.get(0, 0));
-    if (platform::isButtonReleased(platform::Button::Enter))
-      whatYouDoin = 3;
-  } else
-    renderer.renderRectangle({playButtonPos + glm::vec2{0, 400} -
-                                  glm::vec2(buttonSize / 2, buttonSize / 2),
-                              buttonSize, buttonSize},
-                             creditsButton, Colors_White, {}, 0,
-                             playButtonAtlas.get(1, 0));
+  if(frame == 9){
+    frame = 0;
+  }
+  latency += 0.25f;
+  if (latency >= 1.0f) {
+      frame++;
+      latency = 0.0f;
+  }
+
+  if(platform::isButtonReleased(platform::Button::Enter))
+  switch (presentButton) {
+    case 0:
+      currentGameState = IN_GAME;
+      break;
+    case 1:
+      currentGameState = HOW_TO_PLAY;
+      break;
+    case 2:
+      currentGameState = CREDITS;
+    default:
+      break;
+  }
+
 }
 
 void howToplay(int w, int h) {
-  renderer.renderRectangle(
-      {
-          glm::vec2{0, 0},
-          w,
-          h,
-      },
-      howToPlayTex);
+  renderFullScreen(renderer, howToPlayTex, w, h);
   if (platform::isButtonReleased(platform::Button::Escape))
-    whatYouDoin = 0;
+    currentGameState = MAIN_MENU;
 }
 
 void credits(int w, int h) {
-  renderer.renderRectangle(
-      {
-          glm::vec2{0, 0},
-          w,
-          h,
-      },
-      creditsTex);
+  renderFullScreen(renderer, creditsTex, w, h);
   if (platform::isButtonReleased(platform::Button::Escape))
-    whatYouDoin = 0;
+    currentGameState = MAIN_MENU;
 }
+
+#pragma endregion
 
 void gameover(int w, int h, int points) {
 
-  renderer.renderRectangle(
-      {
-          glm::vec2{0, 0},
-          w,
-          h,
-      },
-      gameoverTex);
+  renderFullScreen(renderer, gameoverTex, w, h);
 
   glm::vec2 screenCenter(w / 2.0F, h / 2.0F);
 
+  renderer.renderText(screenCenter - glm::vec2(50, 200) + glm::vec2(2.0f, 2.0f),
+                      "GAME OVER", font, Colors_Red, 1.5F, 4.0F, 3.0F,
+                      true, {});
+
   std::string finalScore = "FINAL SCORE: " + std::to_string(points);
   renderer.renderText(screenCenter - glm::vec2(50, -50) + glm::vec2(2.0f, 2.0f),
-                      finalScore.c_str(), font, Colors_Black, 1.0F, 4.0F, 3.0F,
+                      finalScore.c_str(), font, Colors_Yellow, 1.0F, 4.0F, 3.0F,
                       true, {});
-  renderer.renderText(screenCenter - glm::vec2(50, -50), finalScore.c_str(),
-                      font, glm::vec4(0.780f, 0.151f, 0.0f, 1.0f), 1.0F, 4.0F,
-                      3.0F, true, {});
 
-  std::string restartText = "Press Enter to Restart";
-  renderer.renderText(
-      screenCenter - glm::vec2(50, -150) + glm::vec2(2.0f, 2.0f),
-      restartText.c_str(), font, Colors_Black, 1.0F, 3.0F, 2.0F, true, {});
-  renderer.renderText(screenCenter - glm::vec2(50, -150), restartText.c_str(),
-                      font, Colors_White, 1.0F, 3.0F, 2.0F, true, {});
+  renderer.renderText(screenCenter - glm::vec2(50, -220) + glm::vec2(2.0f, 2.0f),
+                      "Press Enter to Restart", font, Colors_White, 0.5F, 4.0F, 3.0F,
+                      true, {});
 
-  std::string menuText = "Press ESC to return to Main Menu";
-  renderer.renderText(
-      screenCenter - glm::vec2(50, -220) + glm::vec2(2.0f, 2.0f),
-      menuText.c_str(), font, Colors_Black, 1.0F, 3.0F, 2.0F, true, {});
-  renderer.renderText(screenCenter - glm::vec2(50, -220), menuText.c_str(),
-                      font, Colors_White, 1.0F, 3.0F, 2.0F, true, {});
+  renderer.renderText(screenCenter - glm::vec2(50, -285), "Press ESC to Return to Menu",
+                      font, Colors_White, 0.5F, 3.0F, 2.0F, true, {});
 
   if (platform::isButtonReleased(platform::Button::Escape))
-    whatYouDoin = 0;
+    currentGameState = MAIN_MENU;
   else if (platform::isButtonReleased(platform::Button::Enter)) {
     restartGame();
-    whatYouDoin = 1;
+    currentGameState = IN_GAME;
   }
 }
+
+void recoverHealth() {
+    data.health += 0.5f;
+
+    if (data.health > 1.0f && data.lives < 3) {
+        data.lives++;
+        data.health -= 1.0f;
+    }
+
+	if (data.lives >= 3) {
+		data.lives = 3;
+		data.health = std::min(data.health, 1.0f);
+	}
+}
+
+bool resetLevel = false;
+bool scoreReset = false;
+
+bool changeLevelByLife = false;
+int changeLevelByScore = 0;
+
+float frameBullentLatency = 0.0f;
+int framexBullet = 0;
 
 void gameplay(float deltaTime, int w, int h) {
 
@@ -415,6 +507,16 @@ void gameplay(float deltaTime, int w, int h) {
 
 #pragma endregion
 
+#pragma region spawn heal powerup
+  data.spawnTimeHealPowerUp -= deltaTime;
+  if (data.spawnTimeHealPowerUp <= 0.0f) {
+    data.spawnTimeHealPowerUp = rand() % 10 + 5;
+    spawnHealPowerUp();
+  }
+
+
+#pragma endregion
+
 #pragma region camera follow
 
   renderer.currentCamera.follow(data.playerPos, deltaTime * 550, 1, 150, w, h);
@@ -423,7 +525,7 @@ void gameplay(float deltaTime, int w, int h) {
 
 #pragma region render background
 
-  for (int i = 0; i < 2; i++)
+  for (int i = 0; i < 3; i++)
     tiledRenderer[i].render(renderer);
 
 #pragma endregion
@@ -449,6 +551,16 @@ void gameplay(float deltaTime, int w, int h) {
 
   spawnLoads();
 
+
+  frameBullentLatency += 0.34f;
+  if (frameBullentLatency >= 1.0f) {
+    framexBullet++;
+    frameBullentLatency = 0.0f;
+  }
+  if(framexBullet >= 20) {
+    framexBullet = 0;
+  }
+
   for (int i = 0; i < data.loads.size(); i++) {
 
     if (glm::distance(data.playerPos, data.loads[i].getPos()) > 4000.f) {
@@ -458,8 +570,7 @@ void gameplay(float deltaTime, int w, int h) {
     }
     int type = data.loads[i].getType();
 
-    renderer.renderRectangle({data.loads[i].getPos(), 100.f, 100.f},
-                             reloadBullet[type], Colors_White, {}, {});
+    data.loads[i].render(renderer, reloadBullet[type], reloadBulletAtlas[type], framexBullet);
   }
 
   for (int i = 0; i < data.loads.size(); i++) {
@@ -477,18 +588,45 @@ void gameplay(float deltaTime, int w, int h) {
 
 #pragma endregion
 
+#pragma region render and handle heal powerups
+
+
+  for (int i = 0; i < data.healPowerUpPositions.size(); i++) {
+      renderer.renderRectangle({data.healPowerUpPositions[i], 150, 150}, healPowerUpTexture, Colors_White, glm::vec2(0.5f, 0.5f), 0, healPowerUpTextureAtlas.get(framexBullet, 0));
+
+
+    if (glm::distance(data.playerPos, data.healPowerUpPositions[i]) > 4000.f) {
+      data.healPowerUpPositions.erase(data.healPowerUpPositions.begin() + i);
+      i--;
+      continue;
+    }
+
+
+    if (intersectBullet(data.healPowerUpPositions[i], data.playerPos, jetSize)) { 
+      if (data.lives < 3) {
+        data.lives++;
+
+      } else if (data.lives == 3) {
+        data.health = 1.0f;
+      }
+      data.healPowerUpPositions.erase(data.healPowerUpPositions.begin() + i);
+      i--;
+    }
+  }
+#pragma endregion
+
+
 #pragma region handle bullets
 
   data.shootCooldown -= deltaTime;
 
-  if (platform::isButtonHeld(platform::Button::Enter) &&
+  if (platform::isLMouseHeld() &&
       !(data.jetLoad.empty())) {
     if (data.shootCooldown <= 0.0f) {
       if (data.jetLoad.front().canLoadBullet()) {
         Bullets b(data.playerPos, mouseDirection, false,
                   data.jetLoad.front().getDamage(),
                   data.jetLoad.front().getType());
-        std::cout << data.jetLoad.front().getDamage() << std::endl;
         data.bullets.push_back(b);
         PlaySound(shootSound);
 
@@ -516,7 +654,25 @@ void gameplay(float deltaTime, int w, int h) {
 
           if (data.enemies[e].getLife() <= 0) {
             // kill enemy
-            data.points += (data.enemies[e].getType() + 1);
+            #pragma region change level by score
+
+			      data.counter++;
+            data.currentScore += 1;
+            changeLevelByScore++;
+            if(changeLevelByScore < 5) {
+              currentLevel = EASY;
+            } else if (changeLevelByScore >= 5 && changeLevelByScore < 10) {
+              currentLevel = MEDIUM;
+            } else if (changeLevelByScore >= 10) {
+              currentLevel = HARD;
+            }
+            #pragma endregion
+
+			if (data.counter >= 10) {
+				data.counter = 0;
+				recoverHealth();
+			}
+            std::cout << "Current Score: " << data.currentScore << std::endl;
             data.enemies.erase(data.enemies.begin() + e);
           }
           // std::cout << data.bullets[i].getDamage() << std::endl;
@@ -532,7 +688,9 @@ void gameplay(float deltaTime, int w, int h) {
       }
     } else {
       if (intersectBullet(data.bullets[i].getPos(), data.playerPos, jetSize)) {
-        data.health -= data.bullets[i].getDamage();
+        data.health -= data.bullets[i].getDamage(); // Player takes damage
+
+        // DEMOTION LOGIC IS REMOVED FROM HERE
 
         data.bullets.erase(data.bullets.begin() + i);
         i--;
@@ -543,13 +701,46 @@ void gameplay(float deltaTime, int w, int h) {
     data.bullets[i].update(deltaTime);
   }
 
+  #pragma region change level by life
+
   if (data.health <= 0) {
-    // kill player
-    PlaySound(gameOverSound);
-    whatYouDoin = 4;
-  } else {
-    data.health += deltaTime * 0.05;
-    data.health = glm::clamp(data.health, 0.f, 1.f);
+     data.lives--;
+     switch(currentLevel) {
+      case EASY:
+        currentLevel = EASY;
+        break;
+      case MEDIUM:
+        currentLevel = EASY;
+        changeLevelByScore = 0;
+        break;
+      case HARD:
+        currentLevel = MEDIUM;
+        changeLevelByScore = 5;
+        break;
+      default:
+        currentLevel = EASY;
+        break;
+    }
+
+    if(data.lives == 1) {
+      currentLevel = EASY;
+      if(data.currentScore > data.highScore) {
+        data.highScore = data.currentScore;
+      }
+      data.currentScore = 0;
+      changeLevelByScore = 0;
+    }
+  #pragma endregion
+
+    if (data.lives == 0) {
+        // kill player
+        PlaySound(gameOverSound);
+        currentGameState = GAMEOVER;
+    }
+    else {
+		data.health = 1.0f;
+    }
+
   }
 
 #pragma endregion
@@ -623,13 +814,33 @@ void gameplay(float deltaTime, int w, int h) {
     d = "0";
 
   std::string remLoad = std::to_string(data.jetLoad.size());
-  std::string currentLevel = level(data.points);
-  std::string currentPoints = std::to_string(data.points);
+  std::string currentLevelStr = level(); 
+  std::string currentPoints = std::to_string(data.currentScore);
+  std::string highScoreStr = std::to_string(data.highScore);
 
-  renderer.pushCamera();
+  // Calculate points to next level
+  std::string pointsToNextLevelStr;
+  if (currentLevel == EASY) {
+    int pointsNeeded = 5 - changeLevelByScore;
+    pointsToNextLevelStr = "Point/s for Next Lvl: " + std::to_string(std::max(0, pointsNeeded));
+  } else if (currentLevel == MEDIUM) {
+    int pointsNeeded = 10 - changeLevelByScore;
+    pointsToNextLevelStr = "Point/s for Next Lvl: " + std::to_string(std::max(0, pointsNeeded));
+  } else { // HARD
+    pointsToNextLevelStr = "Max Level";
+  }
+
+  // Calculate points to next heal
+  int pointsToHeal = 10 - data.counter;
+  std::string pointsToNextHealStr = "Point/s for Next Heal: " + std::to_string(pointsToHeal);
+
+
+ renderer.pushCamera();
   {
 
     glui::Frame f({0, 0, w, h});
+
+
 
     glui::Box healthBox = glui::Box()
                               .xLeftPerc(0.65)
@@ -638,9 +849,25 @@ void gameplay(float deltaTime, int w, int h) {
                               .yAspectRatio(1.f / 8.f);
 
     renderer.renderRectangle(healthBox, healthBar);
-
     glm::vec4 newRect = healthBox();
     newRect.z *= data.health;
+
+
+    const float heartSize = 60.0f;
+    const float heartSpacing = 70.0f;
+    const float yOffset = 10.0f; 
+
+
+    glm::vec2 heartBasePos = {newRect.x, newRect.y + newRect.w + yOffset};
+
+    for (int i = 0; i < data.lives; i++) {
+        renderer.renderRectangle(
+            {heartBasePos + glm::vec2(i * heartSpacing, 0), heartSize, heartSize},
+            heartTex, Colors_White
+        );
+    }
+
+	const float belowHeartsY = heartBasePos.y + heartSize + 15.0f;
 
     glm::vec4 textCoords = {0, 1, 1, 0};
     textCoords.z *= data.health;
@@ -648,38 +875,92 @@ void gameplay(float deltaTime, int w, int h) {
     renderer.renderRectangle(newRect, health, Colors_White, {}, {}, textCoords);
 
     const char *points = currentPoints.c_str();
-    const char *myLevel = currentLevel.c_str();
+    const char *hScore = highScoreStr.c_str();
+    const char *myLevel = currentLevelStr.c_str();
     const char *load = remLoad.c_str();
     const char *damage = d.c_str();
 
-    glui::Box levelBox = glui::Box()
+    glui::Box highScoreBox = glui::Box()
                              .xLeftPerc(0.03)
                              .yTopPerc(0.01)
                              .xDimensionPercentage(0.15)
                              .yAspectRatio(1.f / 1.8f);
 
-    renderer.renderRectangle(levelBox, textBar);
+    renderer.renderRectangle(highScoreBox, textBar);
 
-    renderer.renderText(glm::vec2{200, 79}, "Level", font, Colors_White, (0.5F),
+    renderer.renderText(glm::vec2{200, 79}, "High Score", font, Colors_White, (0.5F),
                         (4.0F), (3.0F), true, {(0, 0), (0, 0), (0, 0), 0});
-    renderer.renderText(glm::vec2{460, 77}, myLevel, font, Colors_White, (0.6F),
+    renderer.renderText(glm::vec2{460, 77}, hScore, font, Colors_White, (0.6F),
                         (4.0F), (3.0F), true);
 
+
+
     glui::Box scoreBox = glui::Box()
-                             .xLeftPerc(0.35)
-                             .yTopPerc(0.01)
+                             .xLeftPerc(0.03)
+                             .yTopPerc(0.08)
                              .xDimensionPercentage(0.15)
                              .yAspectRatio(1.f / 1.8f);
 
     renderer.renderRectangle(scoreBox, textBar);
-    renderer.renderText(glm::vec2{820, 79}, "Score", font, Colors_White, (0.5F),
+    renderer.renderText(glm::vec2{200, 155}, "Score", font, Colors_White, (0.5F),
                         (4.0F), (3.0F), true, {(0, 1), (0, 1), (0, 1), 0});
-    renderer.renderText(glm::vec2{1045, 74}, points, font, Colors_White, (0.6F),
-                        (4.0F), (3.0F), true);
+    renderer.renderText(glm::vec2{460, 144}, points, font, Colors_White, (0.6F),
+                        (4.0F), (3.0F), true);\
+
+
+
+    glui::Box level1 = glui::Box()
+                        .xLeftPerc(0.03)
+                        .yTopPerc(0.165)
+                        .xDimensionPercentage(0.06)
+                        .yAspectRatio(1.f / 0.90f);
+
+    glui::Box level2 = glui::Box()
+                        .xLeftPerc(0.095)
+                        .yTopPerc(0.165)
+                        .xDimensionPercentage(0.08)
+                        .yAspectRatio(1.f / 1.2f);
+
+    glui::Box level3 = glui::Box()
+                        .xLeftPerc(0.188)
+                        .yTopPerc(0.165)
+                        .xDimensionPercentage(0.06)
+                        .yAspectRatio(1.f / 0.9f);
+
+  if (currentLevel == EASY)
+    renderer.renderRectangle(level1, textBar);
+    else if (currentLevel == MEDIUM) {
+    renderer.renderRectangle(level2, textBar);
+    }
+    else {
+    renderer.renderRectangle(level3, textBar);
+    }
+
+
+    //level section
+    renderer.renderText(glm::vec2{115, 231}, "EASY", font, currentLevelStr == "EASY" ? Colors_Black : Colors_White, (0.5F),
+        (4.0F), (3.0F), true, { (0, 0), (0, 0), (0, 0), 0 });
+
+    renderer.renderText(glm::vec2{ 260, 231 }, "MEDIUM", font, currentLevelStr == "MEDIUM" ? Colors_Black : Colors_White, (0.5F),
+        (4.0F), (3.0F), true, { (0, 0), (0, 0), (0, 0), 0 });
+
+    renderer.renderText(glm::vec2{ 420, 231 }, "HARD", font, currentLevelStr == "HARD" ? Colors_Black : Colors_White, (0.5F),
+        (4.0F), (3.0F), true, { (0, 0), (0, 0), (0, 0), 0 });
+
+
+    // Add new indicators
+    float textYOffset = 1000.0f + 30.0f; // Start Y position for new text
+    renderer.renderText(glm::vec2{188, textYOffset}, pointsToNextLevelStr.c_str(), font, Colors_White, (0.4F),
+                        (3.0F), (2.0F), true);
+
+    textYOffset += 30.0f; // Increment Y for the next line
+    renderer.renderText(glm::vec2{200, textYOffset}, pointsToNextHealStr.c_str(), font, Colors_White, (0.4F),
+                        (3.0F), (2.0F), true);
+
 
     glui::Box damageBox = glui::Box()
-                              .xLeftPerc(0.652)
-                              .yTopPerc(0.107)
+                              .xLeftPerc(0.81)
+                              .yTopPerc(0.18)
                               .xDimensionPercentage(0.03)
                               .yAspectRatio(0.7);
 
@@ -690,26 +971,26 @@ void gameplay(float deltaTime, int w, int h) {
     else
       renderer.renderRectangle(damageBox, damageIcon[0]);
 
-    renderer.renderText(glm::vec2{1383, 120}, "Damage: ", font, Colors_White,
+    renderer.renderText(glm::vec2{1700, belowHeartsY + 10}, "Damage: ", font, Colors_White,
                         (0.5F), (4.0F), (3.0F), true);
-    renderer.renderText(glm::vec2{1480, 117}, damage, font, Colors_White,
+    renderer.renderText(glm::vec2{1790, belowHeartsY + 4}, damage, font, Colors_White,
                         (0.5F), (4.0F), (3.0F), true);
 
     glui::Box loadBox = glui::Box()
-                            .xLeftPerc(0.85)
-                            .yTopPerc(0.11)
+                            .xLeftPerc(0.815)
+                            .yTopPerc(0.12)
                             .xDimensionPercentage(0.023)
                             .yAspectRatio(1);
     renderer.renderRectangle(loadBox, loadIcon);
-    renderer.renderText(glm::vec2{1725, 120}, "Load: ", font, Colors_White,
+    renderer.renderText(glm::vec2{1670, heartBasePos.y + 20}, "Load: ", font, Colors_White,
                         (0.5F), (4.0F), (3.0F), true);
-    renderer.renderText(glm::vec2{1790, 115}, load, font, Colors_White, (0.5F),
+    renderer.renderText(glm::vec2{1730, heartBasePos.y + 15}, load, font, Colors_White, (0.5F),
                         (4.0F), (3.0F), true);
   }
   renderer.popCamera();
 
   if (platform::isButtonReleased(platform::Button::Escape))
-    whatYouDoin = 0;
+    currentGameState = MAIN_MENU;
 }
 
 bool gameLogic(float deltaTime) {
@@ -725,48 +1006,55 @@ bool gameLogic(float deltaTime) {
   renderer.updateWindowMetrics(w, h);
 #pragma endregion
 
-  if (whatYouDoin == 0) {
-    renderer.pushCamera();
-    menu(w, h);
-    restartGame();
-    renderer.popCamera();
-  }
-
-  else if (whatYouDoin == 1) {
-    gameplay(deltaTime, w, h);
-  } else if (whatYouDoin == 2) {
-    renderer.pushCamera();
-    howToplay(w, h);
-    renderer.popCamera();
-  } else if (whatYouDoin == 3) {
-    renderer.pushCamera();
-    credits(w, h);
-    renderer.popCamera();
-  } else if (whatYouDoin == 4) {
-    renderer.pushCamera();
-    gameover(w, h, data.points);
-    renderer.popCamera();
+  switch(currentGameState) {
+    case MAIN_MENU:
+      renderer.pushCamera();
+      menu(w, h);
+      restartGame();
+      renderer.popCamera();
+      break;
+    case IN_GAME:
+      gameplay(deltaTime, w, h);
+      break;
+    case HOW_TO_PLAY:
+      renderer.pushCamera();
+      howToplay(w, h);
+      renderer.popCamera();
+      break;
+    case CREDITS:
+      renderer.pushCamera();
+      credits(w, h);
+      renderer.popCamera();
+      break;
+    case GAMEOVER:
+      renderer.pushCamera();
+      gameover(w, h, data.highScore);
+      renderer.popCamera();
+      break;
+    default:
+      std::cerr << "Unknown game state!" << std::endl;
+      return false;
   }
   renderer.flush();
   // ImGui::ShowDemoWindow();
 
-  /*ImGui::Begin("debug");
-  ImGui::Text("Bullets 1 count: %d", (int)data.bullets.size());
-  ImGui::Text("Enemies count: %d", (int)data.enemies.size());
-  ImGui::Text("Points : %d", (int)data.points);
+  // ImGui::Begin("debug");
+  // ImGui::Text("Bullets 1 count: %d", (int)data.bullets.size());
+  // ImGui::Text("Enemies count: %d", (int)data.enemies.size());
+  // ImGui::Text("Points : %d", (int)data.currentScore);
 
-  if (ImGui::Button("Spawn enemy"))
-  {
-          spawnEnemy();
-  }
+  // if (ImGui::Button("Spawn enemy"))
+  // {
+  //         spawnEnemy();
+  // }
 
-  if (ImGui::Button("Reset game"))
-  {
-          restartGame();
-  }
+  // if (ImGui::Button("Reset game"))
+  // {
+  //         restartGame();
+  // }
 
-  ImGui::SliderFloat("Player Health", &data.health, 0, 1);
-  ImGui::End();*/
+  // ImGui::SliderFloat("Player Health", &data.health, 0, 1);
+  // ImGui::End();
 
   return true;
 }
